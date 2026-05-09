@@ -1,0 +1,598 @@
+﻿@model CourtSyncPro.Models.Entities.Booking
+@using CourtSyncPro.Models.Entities
+@{
+    ViewData["Title"] = "New Booking";
+}
+
+<style>
+    @@keyframes popIn {
+        0%   { opacity: 0; transform: scale(.9) translateY(20px); }
+        70%  { transform: scale(1.01) translateY(-2px); }
+        100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @@keyframes shimmer {
+        0%   { background-position: -600px 0; }
+        100% { background-position: 600px 0; }
+    }
+    @@keyframes labelIn {
+        from { opacity: 0; transform: translateX(-8px); }
+        to   { opacity: 1; transform: translateX(0); }
+    }
+    @@keyframes fadeIn {
+        from { opacity: 0; } to { opacity: 1; }
+    }
+
+    /* LAYOUT */
+    .bk-wrap {
+        min-height: calc(100vh - 130px);
+        display: flex; align-items: flex-start;
+        justify-content: center; padding: 1.5rem 1rem;
+        position: relative; overflow: hidden;
+    }
+
+    /* background blobs */
+    .bk-blob {
+        position: fixed; border-radius: 50%;
+        pointer-events: none; z-index: 0;
+    }
+    .bk-blob-1 {
+        width: 360px; height: 360px; top: -100px; right: -100px;
+        background: radial-gradient(circle, rgba(168,230,61,.11) 0%, transparent 70%);
+    }
+    .bk-blob-2 {
+        width: 240px; height: 240px; bottom: 60px; left: -80px;
+        background: radial-gradient(circle, rgba(13,59,46,.07) 0%, transparent 70%);
+    }
+
+    /* CARD */
+    .bk-card {
+        background: var(--surface);
+        border: 1.5px solid var(--border);
+        border-radius: 22px;
+        box-shadow: 0 12px 48px rgba(13,59,46,.1), 0 2px 8px rgba(13,59,46,.05);
+        width: 100%; max-width: 660px;
+        position: relative; z-index: 1;
+        overflow: hidden;
+        animation: popIn .55s cubic-bezier(.34,1.56,.64,1) both;
+    }
+
+    /* shimmer top bar */
+    .bk-card::before {
+        content: '';
+        position: absolute; top: 0; left: 0; right: 0; height: 4px;
+        background: linear-gradient(90deg, var(--accent), #c4ff45, var(--accent));
+        background-size: 600px 100%;
+        animation: shimmer 2.6s linear infinite;
+        border-radius: 22px 22px 0 0;
+    }
+
+    .bk-card-head {
+        padding: 1.8rem 2rem 1.4rem;
+        border-bottom: 1.5px solid var(--border);
+        display: flex; align-items: center; gap: 16px;
+    }
+    .bk-head-icon {
+        width: 52px; height: 52px; flex-shrink: 0;
+        background: linear-gradient(135deg, var(--primary), var(--primary-mid));
+        border-radius: 15px;
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 4px 16px rgba(13,59,46,.22);
+        transition: transform .3s;
+    }
+    .bk-head-icon:hover { transform: rotate(-6deg) scale(1.05); }
+    .bk-head-icon i { font-size: 1.4rem; color: var(--accent); }
+    .bk-head-title {
+        font-family: 'Syne', sans-serif; font-weight: 800;
+        font-size: 1.45rem; letter-spacing: -.03em;
+        color: var(--primary); margin: 0;
+    }
+    .bk-head-sub { font-size: .8rem; color: var(--text-faint); margin: 2px 0 0; }
+
+    /* DEAL BANNER */
+    .deal-banner {
+        margin: 1.4rem 2rem 0;
+        background: linear-gradient(135deg, rgba(168,230,61,.12), rgba(168,230,61,.05));
+        border: 1.5px solid rgba(168,230,61,.35);
+        border-radius: 12px; padding: .75rem 1.1rem;
+        display: flex; align-items: center; gap: 10px;
+        font-size: .83rem; color: var(--accent-dark);
+        animation: fadeIn .5s ease .3s both;
+    }
+    .deal-icon-wrap {
+        width: 32px; height: 32px; flex-shrink: 0;
+        background: rgba(168,230,61,.2); border-radius: 9px;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .deal-icon-wrap i { font-size: .95rem; color: var(--accent-dark); }
+    .deal-banner strong { font-weight: 700; }
+
+    /* FORM BODY */
+    .bk-card-body { padding: 1.6rem 2rem; }
+
+    /* SECTION LABELS */
+    .field-section-label {
+        font-size: .68rem; font-weight: 700; letter-spacing: .1em;
+        text-transform: uppercase; color: var(--text-faint);
+        margin-bottom: 12px; margin-top: 4px;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .field-section-label::after {
+        content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    /* CUSTOM SELECT & INPUT */
+    .bk-field { margin-bottom: 1rem; animation: labelIn .35s ease both; }
+    .bk-field:nth-child(1) { animation-delay: .08s; }
+    .bk-field:nth-child(2) { animation-delay: .13s; }
+    .bk-field:nth-child(3) { animation-delay: .18s; }
+    .bk-field:nth-child(4) { animation-delay: .23s; }
+    .bk-field:nth-child(5) { animation-delay: .28s; }
+
+    .bk-select-wrap, .bk-input-wrap {
+        display: flex;
+        border: 1.5px solid var(--border);
+        border-radius: 11px; overflow: hidden;
+        transition: border-color .2s, box-shadow .2s, transform .15s;
+        background: var(--surface);
+    }
+    .bk-select-wrap:focus-within,
+    .bk-input-wrap:focus-within {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3.5px rgba(168,230,61,.18);
+        transform: scale(1.008);
+    }
+    .bk-field-icon {
+        width: 44px; flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(168,230,61,.07);
+        border-right: 1.5px solid var(--border);
+        color: var(--primary-mid); font-size: 1rem;
+        transition: background .2s, color .2s;
+    }
+    .bk-select-wrap:focus-within .bk-field-icon,
+    .bk-input-wrap:focus-within  .bk-field-icon {
+        background: rgba(168,230,61,.15);
+        color: var(--accent-dark);
+    }
+    .bk-select-wrap select,
+    .bk-input-wrap input {
+        flex: 1; border: none !important;
+        border-radius: 0 !important; box-shadow: none !important;
+        padding: 10px 14px; font-size: .88rem;
+        color: var(--text-main); background: transparent; outline: none;
+    }
+    .bk-select-wrap select option { background: var(--surface); }
+
+    /* SLOT STATUS CHIP */
+    .slot-chips {
+        display: flex; flex-wrap: wrap; gap: 8px;
+        margin-top: 10px;
+        min-height: 0; transition: min-height .3s;
+    }
+    .slot-chip {
+        padding: 6px 14px; border-radius: 20px; font-size: .78rem; font-weight: 600;
+        border: 1.5px solid var(--border); background: var(--surface);
+        cursor: pointer; transition: all .2s;
+        display: flex; align-items: center; gap: 6px;
+        animation: fadeIn .2s ease both;
+        color: var(--text-main);
+    }
+    .slot-chip:hover { border-color: var(--accent); background: rgba(168,230,61,.08); }
+    .slot-chip.selected {
+        border-color: var(--accent); background: rgba(168,230,61,.15);
+        color: var(--accent-dark); box-shadow: 0 2px 10px rgba(168,230,61,.2);
+    }
+    .slot-chip i { font-size: .8rem; }
+    .slot-none {
+        font-size: .82rem; color: var(--text-faint);
+        display: flex; align-items: center; gap: 6px; padding: 4px 0;
+        animation: fadeIn .2s ease both;
+    }
+
+    /* DIVIDER */
+    .bk-divider {
+        height: 1px; background: var(--border);
+        margin: 1.5rem 0; position: relative;
+    }
+    .bk-divider::after {
+        content: 'Finalize'; position: absolute;
+        left: 50%; top: 50%; transform: translate(-50%,-50%);
+        background: var(--surface); padding: 0 12px;
+        font-size: .68rem; font-weight: 700; letter-spacing: .1em;
+        text-transform: uppercase; color: var(--text-faint);
+    }
+
+    /* PROMO */
+    .promo-wrap { position: relative; }
+    .promo-badge {
+        position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+        background: rgba(168,230,61,.15); color: var(--accent-dark);
+        font-size: .68rem; font-weight: 700; padding: 2px 8px; border-radius: 10px;
+        display: none;
+    }
+    .promo-badge.visible { display: block; animation: fadeIn .2s ease both; }
+
+    /* ACTIONS */
+    .bk-actions {
+        display: flex; gap: 10px; margin-top: .5rem;
+        padding-top: 1.4rem; border-top: 1.5px solid var(--border);
+    }
+    .btn-book {
+        flex: 1; padding: 11px 0;
+        background: linear-gradient(135deg, var(--primary), var(--primary-mid));
+        color: #fff; border: none; border-radius: 11px;
+        font-family: 'Syne', sans-serif; font-weight: 700; font-size: .95rem;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        cursor: pointer; transition: transform .2s, box-shadow .2s;
+        box-shadow: 0 4px 18px rgba(13,59,46,.22);
+        position: relative; overflow: hidden;
+    }
+    .btn-book::after {
+        content: ''; position: absolute; inset: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent);
+        transform: translateX(-100%); transition: transform .5s;
+    }
+    .btn-book:hover::after { transform: translateX(100%); }
+    .btn-book:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(13,59,46,.28); }
+    .btn-book:active { transform: translateY(0); }
+
+    .btn-cancel-bk {
+        padding: 11px 22px; border-radius: 11px;
+        background: var(--bg); border: 1.5px solid var(--border);
+        font-family: 'Syne', sans-serif; font-weight: 700; font-size: .88rem;
+        color: var(--text-muted); cursor: pointer;
+        transition: background .2s, border-color .2s, transform .2s;
+        text-decoration: none; display: flex; align-items: center; gap: 6px;
+    }
+    .btn-cancel-bk:hover {
+        background: var(--border); border-color: var(--text-faint);
+        color: var(--text-main); transform: translateY(-1px);
+    }
+
+    /* SUMMARY PREVIEW */
+    .booking-summary {
+        background: rgba(13,59,46,.04); border: 1.5px solid var(--border);
+        border-radius: 12px; padding: 1rem 1.2rem;
+        margin-bottom: 1.2rem; display: none;
+        animation: fadeIn .3s ease both;
+    }
+    .booking-summary.show { display: block; }
+    .summary-row {
+        display: flex; justify-content: space-between; align-items: center;
+        font-size: .83rem; padding: 4px 0;
+        border-bottom: 1px solid var(--border);
+    }
+    .summary-row:last-child { border-bottom: none; }
+    .summary-label { color: var(--text-faint); }
+    .summary-val   { font-weight: 600; color: var(--primary); }
+
+    /* field error */
+    .bk-field-error {
+        font-size: .75rem; color: var(--danger); margin-top: 5px;
+        display: flex; align-items: center; gap: 4px;
+        animation: fadeIn .2s ease both;
+    }
+</style>
+
+<div class="bk-wrap">
+    <div class="bk-blob bk-blob-1"></div>
+    <div class="bk-blob bk-blob-2"></div>
+
+    <div class="bk-card">
+
+        <!-- Header -->
+        <div class="bk-card-head">
+            <div class="bk-head-icon">
+                <i class="bi bi-calendar-plus-fill"></i>
+            </div>
+            <div>
+                <h1 class="bk-head-title">New Booking</h1>
+                <p class="bk-head-sub">Reserve your court slot in seconds</p>
+            </div>
+        </div>
+
+        <!-- Deal Banner -->
+        <div class="deal-banner">
+            <div class="deal-icon-wrap">
+                <i class="bi bi-lightning-charge-fill"></i>
+            </div>
+            <div>
+                <strong>Early-Bird Deal:</strong>
+                Book 48+ hours in advance and get <strong>10% off</strong> automatically!
+            </div>
+        </div>
+
+        <!-- Form Body -->
+        <div class="bk-card-body">
+            <form asp-action="Create" method="post" id="bookingForm">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger small mb-3"></div>
+
+                <!-- Who & Where -->
+                <div class="field-section-label">Who &amp; Where</div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="bk-field">
+                            <label asp-for="UserId" class="form-label">Player</label>
+                            <div class="bk-select-wrap">
+                                <span class="bk-field-icon"><i class="bi bi-person-fill"></i></span>
+                                <select asp-for="UserId" id="userId">
+                                    <option value="">— Select Player —</option>
+                                    @foreach (var u in (List<User>)ViewBag.Users)
+                                    {
+                                        <option value="@u.UserId">@u.Name (@u.Email)</option>
+                                    }
+                                </select>
+                            </div>
+                            <span asp-validation-for="UserId" class="bk-field-error"></span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="bk-field">
+                            <label asp-for="CourtId" class="form-label">Court</label>
+                            <div class="bk-select-wrap">
+                                <span class="bk-field-icon"><i class="bi bi-geo-alt-fill"></i></span>
+                                <select asp-for="CourtId" id="CourtId">
+                                    <option value="">— Select Court —</option>
+                                    @foreach (var c in (List<Court>)ViewBag.Courts)
+                                    {
+                                        <option value="@c.CourtId"
+                                                data-price="@c.PricePerHour"
+                                                data-sport="@c.SportType"
+                                                data-name="@c.CourtName">
+                                            @c.CourtName (@c.SportType) — Rs.@c.PricePerHour/hr
+                                        </option>
+                                    }
+                                </select>
+                            </div>
+                            <span asp-validation-for="CourtId" class="bk-field-error"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Time Slot -->
+                <div class="field-section-label mt-2">Available Slot</div>
+
+                <!-- Hidden real select (submitted with form) -->
+                <select asp-for="SlotId" id="slotSelect" class="d-none"></select>
+                <span asp-validation-for="SlotId" class="bk-field-error"></span>
+
+                <!-- Visual chips -->
+                <div class="slot-chips" id="slotChips">
+                    <div class="slot-none">
+                        <i class="bi bi-arrow-left-circle"></i> Select a court to see available slots
+                    </div>
+                </div>
+
+                <!-- Booking Summary Preview -->
+                <div class="booking-summary" id="bookingSummary">
+                    <div class="summary-row">
+                        <span class="summary-label"><i class="bi bi-geo-alt me-1"></i>Court</span>
+                        <span class="summary-val" id="sumCourt">—</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label"><i class="bi bi-clock me-1"></i>Slot</span>
+                        <span class="summary-val" id="sumSlot">—</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label"><i class="bi bi-currency-exchange me-1"></i>Rate</span>
+                        <span class="summary-val" id="sumPrice">—</span>
+                    </div>
+                </div>
+
+                <!-- Promo & Submit -->
+                <div class="bk-divider"></div>
+
+                <div class="bk-field promo-wrap" style="max-width:280px;">
+                    <label asp-for="PromoCode" class="form-label">
+                        Promo Code
+                        <span style="font-weight:400; color:var(--text-faint);">(optional)</span>
+                    </label>
+                    <div class="bk-input-wrap">
+                        <span class="bk-field-icon"><i class="bi bi-tag-fill"></i></span>
+                        <input asp-for="PromoCode" id="promoInput"
+                               placeholder="e.g. EARLYBIRD"
+                               autocomplete="off" />
+                    </div>
+                    <span class="promo-badge" id="promoBadge">
+                        <i class="bi bi-check-circle-fill me-1"></i>Applied
+                    </span>
+                </div>
+
+                <div class="bk-actions">
+                    <button type="submit" class="btn-book">
+                        <i class="bi bi-check-circle-fill"></i>
+                        Confirm Booking
+                    </button>
+                    <a asp-action="Index" class="btn-cancel-bk">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+
+    <script>
+        // ── Your existing slot/chip logic (unchanged) ─────────────
+        const allSlots = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(
+            ((List<CourtSyncPro.Models.Entities.TimeSlot>)ViewBag.Slots)
+            .Select(s => new {
+                slotId    = s.SlotId,
+                courtId   = s.CourtId,
+                courtName = s.Court.CourtName,
+                start     = s.StartTime.ToString("dd MMM yyyy HH:mm"),
+                end       = s.EndTime.ToString("HH:mm")
+            })
+        ));
+
+        const courtSel   = document.getElementById('CourtId');
+        const slotSelect = document.getElementById('slotSelect');
+        const chipsWrap  = document.getElementById('slotChips');
+        const summary    = document.getElementById('bookingSummary');
+        const sumCourt   = document.getElementById('sumCourt');
+        const sumSlot    = document.getElementById('sumSlot');
+        const sumPrice   = document.getElementById('sumPrice');
+
+        let selectedSlotId = null;
+
+        function renderChips(courtId) {
+            const filtered = allSlots.filter(s => s.courtId === courtId);
+            chipsWrap.innerHTML = '';
+            if (filtered.length === 0) {
+                chipsWrap.innerHTML =
+                    '<div class="slot-none"><i class="bi bi-calendar-x me-1"></i>No slots available</div>';
+                return;
+            }
+            filtered.forEach((s, i) => {
+                const chip = document.createElement('div');
+                chip.className = 'slot-chip';
+                chip.style.animationDelay = (i * 0.05) + 's';
+                chip.dataset.slotId = s.slotId;
+                chip.dataset.label  = s.start + ' → ' + s.end;
+                chip.innerHTML = `<i class="bi bi-clock"></i>${s.start} → ${s.end}`;
+                chip.addEventListener('click', () => selectChip(chip, s));
+                chipsWrap.appendChild(chip);
+            });
+        }
+
+        function selectChip(chip, s) {
+            document.querySelectorAll('.slot-chip').forEach(c => c.classList.remove('selected'));
+            chip.classList.add('selected');
+            selectedSlotId = s.slotId;
+            slotSelect.innerHTML =
+                `<option value="${s.slotId}" selected>${s.start} → ${s.end}</option>`;
+            const opt = courtSel.options[courtSel.selectedIndex];
+            sumCourt.textContent = opt
+                ? opt.dataset.name + ' (' + opt.dataset.sport + ')' : '—';
+            sumSlot.textContent  = s.start + ' → ' + s.end;
+            sumPrice.textContent = opt ? 'Rs.' + opt.dataset.price + '/hr' : '—';
+            summary.classList.add('show');
+        }
+
+        courtSel.addEventListener('change', function () {
+            const courtId = parseInt(this.value);
+            selectedSlotId = null;
+            slotSelect.innerHTML = '';
+            summary.classList.remove('show');
+            if (!courtId) {
+                chipsWrap.innerHTML =
+                    '<div class="slot-none"><i class="bi bi-arrow-left-circle"></i> Select a court first</div>';
+                return;
+            }
+            renderChips(courtId);
+        });
+
+        document.getElementById('promoInput').addEventListener('input', function () {
+            document.getElementById('promoBadge')
+                .classList.toggle('visible', this.value.trim().length > 0);
+        });
+
+        // ── SignalR — NEW CODE BELOW ───────────────────────────────
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/bookingHub")
+            .withAutomaticReconnect()   // auto-reconnect if connection drops
+            .build();
+
+        // Called when someone else books a slot
+        connection.on("SlotTaken", function (slotId, courtId, courtName, slotLabel) {
+
+            // 1. Remove the chip from view
+            const chip = document.querySelector(`.slot-chip[data-slot-id="${slotId}"]`);
+            if (chip) {
+                chip.style.transition  = "opacity .4s, transform .4s";
+                chip.style.opacity     = "0";
+                chip.style.transform   = "scale(.8)";
+                setTimeout(() => chip.remove(), 420);
+            }
+
+            // 2. If THIS user had that slot selected — clear it and warn
+            if (selectedSlotId === slotId) {
+                selectedSlotId         = null;
+                slotSelect.innerHTML   = '';
+                summary.classList.remove('show');
+                showLiveAlert(
+                    `⚡ The slot you selected was just taken by another user!
+                     Please pick a different time.`,
+                    "warning");
+            } else if (chip) {
+                // Another slot taken — just show a soft toast
+                showLiveAlert(
+                    `🔴 ${slotLabel} at ${courtName} was just booked.`,
+                    "info");
+            }
+        });
+
+        // Called when a booking is cancelled — slot opens up
+        connection.on("SlotAvailable", function (slotId, courtId) {
+
+            // Only re-add chip if the user has that court selected
+            const selectedCourtId = parseInt(courtSel.value);
+            if (selectedCourtId !== courtId) return;
+
+            const slot = allSlots.find(s => s.slotId === slotId);
+            if (!slot) return;
+
+            // Check chip doesn't already exist
+            if (document.querySelector(`.slot-chip[data-slot-id="${slotId}"]`)) return;
+
+            const chip = document.createElement('div');
+            chip.className      = 'slot-chip';
+            chip.dataset.slotId = slot.slotId;
+            chip.dataset.label  = slot.start + ' → ' + slot.end;
+            chip.innerHTML      = `<i class="bi bi-clock"></i>${slot.start} → ${slot.end}`;
+            chip.addEventListener('click', () => selectChip(chip, slot));
+            chipsWrap.appendChild(chip);
+
+            showLiveAlert(`✅ A slot just opened up: ${slot.start} → ${slot.end}`, "success");
+        });
+
+        // Start the connection
+        connection.start()
+            .then(() => console.log("✅ SignalR connected"))
+            .catch(err => console.error("SignalR error:", err));
+
+        // ── Toast notification helper ──────────────────────────────
+        function showLiveAlert(msg, type) {
+            // Remove old alerts
+            document.querySelectorAll('.signalr-alert').forEach(a => a.remove());
+
+            const colors = {
+                warning: { bg:"#fff8e1", border:"#f9a825", text:"#795548" },
+                success: { bg:"#e8f5e9", border:"#43a047", text:"#1b5e20" },
+                info:    { bg:"#e3f2fd", border:"#1e88e5", text:"#0d47a1" },
+            };
+            const c = colors[type] || colors.info;
+
+            const div = document.createElement('div');
+            div.className    = 'signalr-alert';
+            div.style.cssText = `
+                position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+                background: ${c.bg}; border: 1.5px solid ${c.border};
+                color: ${c.text}; border-radius: 12px;
+                padding: 12px 18px; font-size: .85rem; font-weight: 600;
+                box-shadow: 0 4px 20px rgba(0,0,0,.12);
+                max-width: 320px; line-height: 1.4;
+                animation: fadeIn .3s ease both;
+                display: flex; align-items: flex-start; gap: 10px;`;
+
+            div.innerHTML = `
+                <span style="flex:1">${msg}</span>
+                <button onclick="this.parentElement.remove()"
+                        style="background:none;border:none;cursor:pointer;
+                               font-size:1rem;color:${c.text};padding:0;
+                               line-height:1;flex-shrink:0">✕</button>`;
+
+            document.body.appendChild(div);
+            setTimeout(() => div && div.remove(), 6000);
+        }
+    </script>
+}

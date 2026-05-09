@@ -1,0 +1,127 @@
+﻿@{
+    ViewData["Title"] = "Home";
+}
+
+<!-- Hero Banner -->
+<div class="rounded-4 p-5 mb-5 text-white"
+     style="background: linear-gradient(135deg, #1a3c5e 0%, #2d6a9f 100%);">
+    <div class="row align-items-center">
+        <div class="col-md-7">
+            <h1 class="display-5 fw-bold mb-3">Where Athletes Meet Their Courts</h1>
+            <p class="lead mb-4 opacity-75">
+                Book futsal, padel, cricket nets, and badminton courts online —
+                real-time availability, instant confirmation.
+            </p>
+            <a asp-controller="Courts" asp-action="Index"
+                   class="btn btn-accent btn-lg px-4 me-2">
+                <i class="bi bi-search me-1"></i> Browse Courts
+            </a>
+            <a asp-controller="Bookings" asp-action="Create"
+                   class="btn btn-outline-light btn-lg px-4">
+                <i class="bi bi-plus-circle me-1"></i> Book Now
+            </a>
+        </div>
+        <div class="col-md-5 text-center mt-4 mt-md-0">
+            <div class="display-1">🏟</div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Row -->
+<div class="row g-4 mb-5">
+    <div class="col-md-4">
+        <div class="card p-4 text-center">
+            <i class="bi bi-geo-alt-fill fs-1 mb-2" style="color:#1a3c5e"></i>
+            <div class="display-6 fw-bold">@ViewBag.TotalCourts</div>
+            <div class="text-muted">Active Courts</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-4 text-center">
+            <i class="bi bi-calendar2-check fs-1 mb-2" style="color:#e8a020"></i>
+            <div class="display-6 fw-bold">@ViewBag.TotalBookings</div>
+            <div class="text-muted">Total Bookings</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-4 text-center">
+            <i class="bi bi-people-fill fs-1 mb-2" style="color:#28a745"></i>
+            <div class="display-6 fw-bold">@ViewBag.TotalUsers</div>
+            <div class="text-muted">Registered Users</div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Rated Courts -->
+<h4 class="fw-bold mb-3">
+    <i class="bi bi-star-fill text-warning me-2"></i>Top-Rated Courts
+</h4>
+<div class="row g-4 mb-5">
+    @foreach (var court in ViewBag.TopCourts)
+    {
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <span class="badge bg-primary mb-2">@court.SportType</span>
+                    <h6 class="card-title fw-bold">@court.CourtName</h6>
+                    <p class="text-muted small mb-1">
+                        <i class="bi bi-geo-alt"></i> @court.City
+                    </p>
+                    <p class="text-muted small mb-2">
+                        <i class="bi bi-person"></i> @court.CourtOwner.BusinessName
+                    </p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold text-success">Rs. @court.PricePerHour/hr</span>
+                        <span class="text-warning">
+                            <i class="bi bi-star-fill"></i> @court.Rating.ToString("0.0")
+                        </span>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0 pb-3">
+                    <a asp-controller="Courts" asp-action="Details"
+                       asp-route-id="@court.CourtId"
+                       class="btn btn-accent btn-sm w-100">View & Book</a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Discount Plans -->
+<h4 class="fw-bold mb-3">
+    <i class="bi bi-tag-fill text-danger me-2"></i>Membership & Discount Plans
+</h4>
+<div class="row g-3">
+    <div class="col-md-3">
+        <div class="card p-3 text-center h-100" style="border-top: 3px solid #17a2b8 !important;">
+            <i class="bi bi-alarm fs-2 mb-2" style="color:#17a2b8"></i>
+            <h6 class="fw-bold">Early-Bird</h6>
+            <p class="text-muted small mb-1">Book 48+ hours ahead</p>
+            <span class="badge fs-6" style="background:#17a2b8">10% OFF</span>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 text-center h-100" style="border-top: 3px solid #6f42c1 !important;">
+            <i class="bi bi-calendar3 fs-2 mb-2" style="color:#6f42c1"></i>
+            <h6 class="fw-bold">6-Month Plan</h6>
+            <p class="text-muted small mb-1">Pre-paid 6-month access</p>
+            <span class="badge fs-6" style="background:#6f42c1">15% OFF</span>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 text-center h-100" style="border-top: 3px solid #e8a020 !important;">
+            <i class="bi bi-trophy fs-2 mb-2" style="color:#e8a020"></i>
+            <h6 class="fw-bold">12-Month Plan</h6>
+            <p class="text-muted small mb-1">Annual court membership</p>
+            <span class="badge fs-6" style="background:#e8a020">25% OFF</span>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 text-center h-100" style="border-top: 3px solid #28a745 !important;">
+            <i class="bi bi-people fs-2 mb-2" style="color:#28a745"></i>
+            <h6 class="fw-bold">Referral Bonus</h6>
+            <p class="text-muted small mb-1">Refer a friend who books</p>
+            <span class="badge fs-6" style="background:#28a745">5% Credit</span>
+        </div>
+    </div>
+</div>

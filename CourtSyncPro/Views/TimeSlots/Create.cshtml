@@ -1,0 +1,49 @@
+﻿@model CourtSyncPro.Models.Entities.TimeSlot
+@{
+    ViewData["Title"] = "Add Time Slot";
+}
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-5">
+        <div class="card p-4">
+            <div class="text-center mb-4">
+                <span style="font-size:2.5rem;">⏰</span>
+                <h4 class="fw-bold mt-2" style="color:var(--primary);">Add Time Slot</h4>
+                <p class="text-muted small">Court: <strong>@ViewBag.Court.CourtName</strong></p>
+            </div>
+
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="CourtId" />
+
+                <div asp-validation-summary="All" class="alert alert-danger py-2 small"></div>
+
+                <div class="mb-3">
+                    <label asp-for="StartTime" class="form-label fw-semibold">Start Date & Time</label>
+                    <input asp-for="StartTime" type="datetime-local" class="form-control" />
+                    <span asp-validation-for="StartTime" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="EndTime" class="form-label fw-semibold">End Date & Time</label>
+                    <input asp-for="EndTime" type="datetime-local" class="form-control" />
+                    <span asp-validation-for="EndTime" class="text-danger small"></span>
+                </div>
+
+                <button type="submit" class="btn btn-accent w-100 py-2 fw-semibold">
+                    <i class="bi bi-plus-circle me-1"></i> Add Slot
+                </button>
+                <a asp-action="ManageSlots" asp-route-courtId="@Model.CourtId"
+                       class="btn btn-outline-secondary w-100 mt-2">
+                    <i class="bi bi-arrow-left me-1"></i> Back
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,0 +1,86 @@
+﻿@model CourtSyncPro.Models.Entities.Court
+@{
+    ViewData["Title"] = Model.CourtName;
+}
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <span class="badge bg-primary mb-2">@Model.SportType</span>
+                    <h3 class="fw-bold mb-1">@Model.CourtName</h3>
+                    <p class="text-muted mb-0">
+                        <i class="bi bi-geo-alt me-1"></i>@Model.Address, @Model.City
+                    </p>
+                </div>
+                <div class="text-end">
+                    <div class="fs-3 fw-bold text-success">Rs. @Model.PricePerHour</div>
+                    <small class="text-muted">per hour</small>
+                </div>
+            </div>
+            <hr />
+            <div class="row g-3">
+                <div class="col-sm-6">
+                    <p class="mb-1 fw-semibold">Owner</p>
+                    <p class="text-muted">@Model.CourtOwner?.BusinessName</p>
+                </div>
+                <div class="col-sm-6">
+                    <p class="mb-1 fw-semibold">Rating</p>
+                    <p class="text-warning">
+                        <i class="bi bi-star-fill"></i> @Model.Rating.ToString("0.0") / 5.0
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reviews -->
+        <div class="card p-4">
+            <h5 class="fw-bold mb-3">
+                <i class="bi bi-chat-left-text me-2 text-primary"></i>Reviews
+            </h5>
+            @if (!Model.Reviews.Any())
+            {
+                <p class="text-muted">No reviews yet.</p>
+            }
+            else
+            {
+                @foreach (var review in Model.Reviews)
+                {
+                    <div class="border-bottom pb-3 mb-3">
+                        <div class="d-flex justify-content-between">
+                            <strong>@review.User?.Name</strong>
+                            <span class="text-warning">
+                                @for (int i = 0; i < review.Rating; i++)
+                                {
+                                    <text>⭐</text>
+                                }
+                            </span>
+                        </div>
+                        <p class="text-muted small mb-0">@review.Comment</p>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+    <!-- Booking Sidebar -->
+    <div class="col-lg-4">
+        <div class="card p-4 sticky-top" style="top:80px">
+            <h5 class="fw-bold mb-3">
+                <i class="bi bi-calendar-check me-2 text-primary"></i>Book This Court
+            </h5>
+            <p class="text-muted small mb-3">
+                Available slots shown during checkout. Early-bird bookings (48+ hrs) get 10% off!
+            </p>
+            <a asp-controller="Bookings" asp-action="Create"
+                   class="btn btn-accent w-100 mb-2">
+                <i class="bi bi-plus-circle me-1"></i> Book Now
+            </a>
+            <a asp-controller="Courts" asp-action="Index"
+                   class="btn btn-outline-secondary w-100">
+                ← Back to Courts
+            </a>
+        </div>
+    </div>
+</div>

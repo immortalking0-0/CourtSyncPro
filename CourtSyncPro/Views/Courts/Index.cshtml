@@ -1,0 +1,106 @@
+﻿@model IEnumerable<CourtSyncPro.Models.Entities.Court>
+@using CourtSyncPro.Models.Entities
+@{
+    ViewData["Title"] = "Browse Courts";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold mb-0">
+        <i class="bi bi-geo-alt-fill me-2 text-primary"></i>Browse Courts
+    </h3>
+    <a asp-action="Create" class="btn btn-accent">
+        <i class="bi bi-plus-circle me-1"></i> Add Court
+    </a>
+</div>
+
+<!-- Filter Bar -->
+<div class="card p-3 mb-4">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label small fw-semibold">City</label>
+            <select name="city" class="form-select form-select-sm">
+                <option value="">All Cities</option>
+                @foreach (var c in (List<string>)ViewBag.Cities)
+                {
+                    <option value="@c">@c</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small fw-semibold">Sport</label>
+            <select name="sport" class="form-select form-select-sm">
+                <option value="">All Sports</option>
+                @foreach (SportType s in ViewBag.Sports)
+                {
+                    <option value="@((int)s)">@s</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small fw-semibold">Max Price (Rs./hr)</label>
+            <input type="number" name="maxPrice" class="form-control form-control-sm"
+                   placeholder="e.g. 3000" />
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-primary btn-sm flex-fill">
+                <i class="bi bi-funnel me-1"></i> Filter
+            </button>
+            <a asp-action="Index" class="btn btn-outline-secondary btn-sm">Reset</a>
+        </div>
+    </form>
+</div>
+
+<!-- Court Cards -->
+@if (!Model.Any())
+{
+    <div class="text-center py-5 text-muted">
+        <i class="bi bi-search fs-1 d-block mb-2"></i>
+        No courts found. <a asp-action="Index">Clear filters</a>
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        @foreach (var court in Model)
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100">
+                    <div class="p-3 rounded-top text-white d-flex justify-content-between"
+                         style="background: linear-gradient(135deg,#1a3c5e,#2d6a9f)">
+                        <span class="fw-bold">@court.CourtName</span>
+                        <span class="badge bg-warning text-dark">@court.SportType</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small mb-1">
+                            <i class="bi bi-geo-alt"></i> @court.Address, @court.City
+                        </p>
+                        <p class="text-muted small mb-2">
+                            <i class="bi bi-person"></i> @court.CourtOwner?.BusinessName
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="fs-5 fw-bold text-success">
+                                Rs. @court.PricePerHour
+                                <small class="fs-6 text-muted">/hr</small>
+                            </span>
+                            <span class="text-warning fw-semibold">
+                                <i class="bi bi-star-fill"></i> @court.Rating.ToString("0.0")
+                            </span>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a asp-action="Details" asp-route-id="@court.CourtId"
+                               class="btn btn-accent btn-sm flex-fill">Book</a>
+                            <a asp-action="Edit" asp-route-id="@court.CourtId"
+                                   class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a asp-action="Delete" asp-route-id="@court.CourtId"
+                                   class="btn btn-outline-danger btn-sm">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

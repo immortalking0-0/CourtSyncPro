@@ -1,0 +1,587 @@
+﻿@model IEnumerable<CourtSyncPro.Models.Entities.Booking>
+@using CourtSyncPro.Models.Entities
+@{
+    ViewData["Title"] = "Bookings";
+}
+
+<style>
+    @@keyframes fadeUp {
+        from { opacity: 0; transform: translateY(16px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @@keyframes rowIn {
+        from { opacity: 0; transform: translateX(-10px); }
+        to   { opacity: 1; transform: translateX(0); }
+    }
+    @@keyframes shimmer {
+        0%   { background-position: -600px 0; }
+        100% { background-position:  600px 0; }
+    }
+    @@keyframes slideDown {
+        from { opacity: 0; transform: translateY(-8px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* PAGE HEADER */
+    .bl-header {
+        display: flex; align-items: center; justify-content: space-between;
+        flex-wrap: wrap; gap: 12px; margin-bottom: 1.6rem;
+        animation: fadeUp .4s ease both;
+    }
+    .bl-title-group { display: flex; align-items: center; gap: 14px; }
+    .bl-title-icon {
+        width: 48px; height: 48px; background: var(--primary);
+        border-radius: 14px; display: flex; align-items: center;
+        justify-content: center; flex-shrink: 0;
+        box-shadow: 0 4px 16px rgba(13,59,46,.2);
+        transition: transform .3s;
+    }
+    .bl-title-icon:hover { transform: rotate(-6deg) scale(1.06); }
+    .bl-title-icon i { font-size: 1.3rem; color: var(--accent); }
+    .bl-title {
+        font-family: 'Syne', sans-serif; font-weight: 800;
+        font-size: 1.45rem; letter-spacing: -.03em; color: var(--primary); margin: 0;
+    }
+    .bl-title-sub { font-size: .78rem; color: var(--text-faint); margin: 2px 0 0; }
+
+    /* STATS ROW */
+    .bl-stats {
+        display: flex; flex-wrap: wrap; gap: 10px;
+        margin-bottom: 1.4rem;
+        animation: fadeUp .4s ease .1s both;
+    }
+    .bl-stat-pill {
+        display: inline-flex; align-items: center; gap: 7px;
+        padding: 6px 14px; border-radius: 20px; font-size: .78rem; font-weight: 600;
+        border: 1.5px solid var(--border); background: var(--surface);
+        color: var(--text-muted);
+    }
+    .bl-stat-pill .sp-dot {
+        width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    .bl-stat-pill .sp-num {
+        font-family: 'Syne', sans-serif; font-weight: 800; color: var(--primary);
+    }
+
+    /* SEARCH / FILTER BAR */
+    .bl-toolbar {
+        display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+        margin-bottom: 1.2rem;
+        animation: slideDown .4s ease .15s both;
+    }
+    .bl-search-wrap {
+        display: flex; align-items: center; gap: 0;
+        border: 1.5px solid var(--border); border-radius: 11px; overflow: hidden;
+        background: var(--surface); flex: 1; min-width: 200px;
+        transition: border-color .2s, box-shadow .2s;
+    }
+    .bl-search-wrap:focus-within {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(168,230,61,.18);
+    }
+    .bl-search-icon {
+        width: 40px; display: flex; align-items: center; justify-content: center;
+        color: var(--text-faint); font-size: .9rem; flex-shrink: 0;
+    }
+    .bl-search-wrap input {
+        flex: 1; border: none; outline: none; background: transparent;
+        padding: 8px 12px 8px 0; font-size: .85rem; color: var(--text-main);
+    }
+    .bl-search-wrap input::placeholder { color: var(--text-faint); }
+
+    .bl-filter-chip {
+        padding: 7px 16px; border-radius: 20px; font-size: .78rem; font-weight: 600;
+        border: 1.5px solid var(--border); background: var(--surface);
+        cursor: pointer; transition: all .2s; color: var(--text-muted);
+        white-space: nowrap;
+    }
+    .bl-filter-chip:hover { border-color: var(--accent); color: var(--accent-dark); }
+    .bl-filter-chip.active-all        { border-color: var(--primary); background: var(--primary); color: #fff; }
+    .bl-filter-chip.active-confirmed  { border-color: #27ae60; background: rgba(39,174,96,.1); color: #1a7a3c; }
+    .bl-filter-chip.active-pending    { border-color: #f39c12; background: rgba(243,156,18,.1); color: #b57a00; }
+    .bl-filter-chip.active-cancelled  { border-color: var(--danger); background: rgba(192,57,43,.09); color: var(--danger); }
+
+    /* MAIN CARD */
+    .bl-card {
+        background: var(--surface);
+        border: 1.5px solid var(--border);
+        border-radius: 18px; overflow: hidden;
+        box-shadow: 0 4px 20px rgba(13,59,46,.07);
+        animation: fadeUp .45s ease .2s both;
+        position: relative;
+    }
+    .bl-card::before {
+        content: '';
+        position: absolute; top: 0; left: 0; right: 0; height: 3px;
+        background: linear-gradient(90deg, var(--accent), #c4ff45, var(--accent));
+        background-size: 600px 100%;
+        animation: shimmer 2.8s linear infinite;
+    }
+
+    /* TABLE */
+    .bl-table { width: 100%; border-collapse: collapse; }
+    .bl-table thead tr {
+        background: var(--primary);
+    }
+    .bl-table thead th {
+        padding: 13px 16px;
+        font-family: 'Syne', sans-serif; font-size: .72rem; font-weight: 700;
+        letter-spacing: .08em; text-transform: uppercase;
+        color: rgba(255,255,255,.75); border: none; white-space: nowrap;
+    }
+    .bl-table thead th:first-child { padding-left: 20px; }
+    .bl-table thead th:last-child  { padding-right: 20px; text-align: center; }
+
+    .bl-table tbody tr {
+        border-bottom: 1px solid var(--border);
+        transition: background .15s;
+        animation: rowIn .35s ease both;
+    }
+    .bl-table tbody tr:last-child { border-bottom: none; }
+    .bl-table tbody tr:hover td { background: rgba(168,230,61,.04); }
+    .bl-table tbody tr.hidden-row { display: none; }
+
+    .bl-table tbody td {
+        padding: 13px 16px; font-size: .86rem;
+        color: var(--text-main); vertical-align: middle;
+    }
+    .bl-table tbody td:first-child { padding-left: 20px; }
+    .bl-table tbody td:last-child  { padding-right: 20px; }
+
+    /* stagger rows */
+    .bl-table tbody tr:nth-child(1)  { animation-delay: .05s; }
+    .bl-table tbody tr:nth-child(2)  { animation-delay: .09s; }
+    .bl-table tbody tr:nth-child(3)  { animation-delay: .13s; }
+    .bl-table tbody tr:nth-child(4)  { animation-delay: .17s; }
+    .bl-table tbody tr:nth-child(5)  { animation-delay: .21s; }
+    .bl-table tbody tr:nth-child(6)  { animation-delay: .25s; }
+    .bl-table tbody tr:nth-child(7)  { animation-delay: .29s; }
+    .bl-table tbody tr:nth-child(8)  { animation-delay: .33s; }
+
+    /* BOOKING ID */
+    .bid-badge {
+        display: inline-flex; align-items: center; gap: 3px;
+        font-family: 'Syne', sans-serif; font-weight: 800; font-size: .8rem;
+        color: var(--text-faint);
+    }
+    .bid-badge i { font-size: .7rem; }
+
+    /* PLAYER CELL */
+    .player-cell { display: flex; align-items: center; gap: 9px; }
+    .player-avatar {
+        width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
+        background: linear-gradient(135deg, var(--primary), var(--primary-mid));
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Syne', sans-serif; font-weight: 800;
+        font-size: .82rem; color: var(--accent);
+    }
+    .player-name { font-weight: 600; color: var(--primary); font-size: .85rem; }
+
+    /* COURT CELL */
+    .court-cell { display: flex; flex-direction: column; gap: 2px; }
+    .court-name { font-weight: 600; font-size: .85rem; color: var(--primary); }
+    .sport-pill {
+        display: inline-flex; align-items: center; gap: 4px;
+        background: rgba(168,230,61,.12); color: var(--accent-dark);
+        border-radius: 20px; padding: 2px 9px; font-size: .7rem; font-weight: 700;
+        width: fit-content;
+    }
+
+    /* DATE CELL */
+    .date-cell { font-size: .82rem; color: var(--text-muted); white-space: nowrap; }
+
+    /* AMOUNT */
+    .amount-val {
+        font-family: 'Syne', sans-serif; font-weight: 800;
+        font-size: .9rem; color: #1a7a3c;
+    }
+
+    /* QR CODE */
+    .qr-code-cell {
+        font-family: 'Courier New', monospace; font-size: .75rem;
+        background: rgba(13,59,46,.05); color: var(--primary);
+        padding: 3px 8px; border-radius: 6px; letter-spacing: .06em;
+        display: inline-block;
+    }
+
+    /* STATUS BADGES */
+    .status-badge {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 4px 11px; border-radius: 20px; font-size: .73rem; font-weight: 700;
+        white-space: nowrap;
+    }
+    .status-badge .sd { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .sb-confirmed { background: rgba(39,174,96,.12); color: #1a7a3c; border: 1px solid rgba(39,174,96,.3); }
+    .sb-confirmed .sd { background: #27ae60; animation: pulse-dot 2s infinite; }
+    .sb-pending   { background: rgba(243,156,18,.12); color: #b57a00; border: 1px solid rgba(243,156,18,.3); }
+    .sb-pending   .sd { background: #f39c12; animation: pulse-dot 2s infinite; }
+    .sb-cancelled { background: rgba(192,57,43,.09); color: var(--danger); border: 1px solid rgba(192,57,43,.25); }
+    .sb-cancelled .sd { background: var(--danger); }
+
+    /* ACTION BUTTONS */
+    .action-group { display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .ab {
+        width: 32px; height: 32px; border-radius: 9px; border: 1.5px solid var(--border);
+        background: var(--surface); display: flex; align-items: center; justify-content: center;
+        font-size: .85rem; cursor: pointer; text-decoration: none;
+        transition: background .2s, border-color .2s, transform .2s, color .2s;
+        color: var(--text-muted);
+    }
+    .ab:hover { transform: translateY(-2px); }
+    .ab-view:hover   { border-color: var(--info);    background: rgba(26,110,168,.08);   color: var(--info); }
+    .ab-edit:hover   { border-color: var(--accent);  background: rgba(168,230,61,.1);    color: var(--accent-dark); }
+    .ab-cancel:hover { border-color: #f39c12;        background: rgba(243,156,18,.08);   color: #b57a00; }
+    .ab-delete:hover { border-color: var(--danger);  background: rgba(192,57,43,.08);    color: var(--danger); }
+
+    /* EMPTY STATE */
+    .empty-state {
+        text-align: center; padding: 5rem 2rem;
+        animation: fadeUp .4s ease both;
+    }
+    .empty-icon-wrap {
+        width: 80px; height: 80px; margin: 0 auto 1.2rem;
+        background: rgba(13,59,46,.05); border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .empty-icon-wrap i { font-size: 2rem; color: var(--text-faint); }
+    .empty-title { font-family: 'Syne', sans-serif; font-weight: 800;
+        font-size: 1.2rem; color: var(--primary); margin-bottom: 6px; }
+    .empty-sub { color: var(--text-faint); font-size: .88rem; }
+
+    /* NO RESULTS (filtered) */
+    .no-results-row td {
+        text-align: center; padding: 3rem !important;
+        color: var(--text-faint); font-size: .88rem;
+    }
+
+    /* CANCEL MODAL */
+    .modal-backdrop-custom {
+        display: none; position: fixed; inset: 0;
+        background: rgba(13,59,46,.45); z-index: 1050;
+        align-items: center; justify-content: center;
+        backdrop-filter: blur(2px);
+    }
+    .modal-backdrop-custom.show { display: flex; }
+    .modal-box {
+        background: var(--surface); border-radius: 20px;
+        padding: 2rem; max-width: 360px; width: 90%;
+        border: 1.5px solid var(--border);
+        box-shadow: 0 20px 60px rgba(13,59,46,.2);
+        animation: popIn .35s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    @@keyframes popIn {
+        from { opacity: 0; transform: scale(.88); }
+        to   { opacity: 1; transform: scale(1); }
+    }
+    .modal-icon-w {
+        width: 54px; height: 54px; border-radius: 15px;
+        background: rgba(243,156,18,.1);
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto .9rem;
+    }
+    .modal-icon-w i { font-size: 1.4rem; color: #f39c12; }
+    .modal-title-t { font-family: 'Syne', sans-serif; font-weight: 800;
+        font-size: 1.05rem; color: var(--primary); text-align: center; margin-bottom: 5px; }
+    .modal-body-t  { font-size: .83rem; color: var(--text-faint); text-align: center; margin-bottom: 1.3rem; }
+    .modal-acts { display: flex; gap: 10px; }
+    .modal-acts .mc {
+        flex: 1; padding: 9px; border-radius: 10px;
+        background: var(--bg); border: 1.5px solid var(--border);
+        font-family: 'Syne', sans-serif; font-weight: 700; font-size: .85rem;
+        cursor: pointer; color: var(--text-muted); transition: background .2s;
+    }
+    .modal-acts .mc:hover { background: var(--border); }
+    .modal-acts .mok {
+        flex: 1; padding: 9px; border-radius: 10px;
+        background: #f39c12; border: none; color: #fff;
+        font-family: 'Syne', sans-serif; font-weight: 700; font-size: .85rem;
+        cursor: pointer; box-shadow: 0 3px 12px rgba(243,156,18,.3);
+        transition: transform .2s, box-shadow .2s;
+    }
+    .modal-acts .mok:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(243,156,18,.38); }
+</style>
+
+<!-- Cancel modal -->
+<div class="modal-backdrop-custom" id="cancelModal">
+    <div class="modal-box">
+        <div class="modal-icon-w"><i class="bi bi-x-circle-fill"></i></div>
+        <div class="modal-title-t">Cancel Booking?</div>
+        <div class="modal-body-t">
+            Booking <strong id="modalBid"></strong> will be marked as cancelled.
+            This can be reversed by editing the booking.
+        </div>
+        <div class="modal-acts">
+            <button class="mc" id="modalCancelBtn">Keep It</button>
+            <button class="mok" id="modalConfirmBtn">Yes, Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div>
+
+    <!-- Header -->
+    <div class="bl-header">
+        <div class="bl-title-group">
+            <div class="bl-title-icon">
+                <i class="bi bi-calendar-check-fill"></i>
+            </div>
+            <div>
+                <h1 class="bl-title">All Bookings</h1>
+                <p class="bl-title-sub">Manage and track court reservations</p>
+            </div>
+        </div>
+        <a asp-action="Create" class="btn btn-accent">
+            <i class="bi bi-plus-circle-fill me-1"></i> New Booking
+        </a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="bl-card">
+            <div class="empty-state">
+                <div class="empty-icon-wrap">
+                    <i class="bi bi-calendar-x"></i>
+                </div>
+                <div class="empty-title">No Bookings Yet</div>
+                <p class="empty-sub">Start by creating the first court reservation.</p>
+                <a asp-action="Create" class="btn btn-accent mt-2">
+                    <i class="bi bi-plus-circle-fill me-1"></i> Create First Booking
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Stats row -->
+        {
+            var total = Model.Count();
+            var confirmed = Model.Count(b => b.Status == BookingStatus.Confirmed);
+            var pending = Model.Count(b => b.Status == BookingStatus.Pending);
+            var cancelled = Model.Count(b => b.Status == BookingStatus.Cancelled);
+        }
+    }
+    <div class="bl-stats">
+            <div class="bl-stat-pill">
+                <span class="sp-dot" style="background:var(--primary)"></span>
+                Total <span class="sp-num">total</span>
+            </div>
+            <div class="bl-stat-pill">
+                <span class="sp-dot" style="background:#27ae60"></span>
+                Confirmed <span class="sp-num">confirmed</span>
+            </div>
+            <div class="bl-stat-pill">
+                <span class="sp-dot" style="background:#f39c12"></span>
+                Pending <span class="sp-num">pending</span>
+            </div>
+            <div class="bl-stat-pill">
+                <span class="sp-dot" style="background:var(--danger)"></span>
+                Cancelled <span class="sp-num">cancelled</span>
+            </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="bl-toolbar">
+            <div class="bl-search-wrap">
+                <span class="bl-search-icon"><i class="bi bi-search"></i></span>
+                <input type="text" id="searchInput" placeholder="Search player, court, QR code…" />
+            </div>
+            <div class="bl-filter-chip active-all" data-filter="all">All</div>
+            <div class="bl-filter-chip" data-filter="confirmed">Confirmed</div>
+            <div class="bl-filter-chip" data-filter="pending">Pending</div>
+            <div class="bl-filter-chip" data-filter="cancelled">Cancelled</div>
+        </div>
+
+        <!-- Table -->
+        <div class="bl-card">
+            <div class="table-responsive">
+                <table class="bl-table" id="bookingTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Player</th>
+                            <th>Court</th>
+                            <th>Date</th>
+                            <th>Amount</th>
+                            <th>QR Code</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bookingBody">
+                        @foreach (var b in Model)
+                        {
+                            var statusKey = b.Status.ToString().ToLower();
+                            var playerInitial = b.User?.Name?.Length > 0
+                                ? b.User.Name[0].ToString().ToUpper() : "?";
+
+                            <tr data-status="@statusKey"
+                                data-search="@((b.User?.Name + b.Court?.CourtName + b.QRCode + b.BookingId).ToLower())">
+
+                                <td>
+                                    <span class="bid-badge">
+                                        <i class="bi bi-hash"></i>@b.BookingId
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <div class="player-cell">
+                                        <div class="player-avatar">@playerInitial</div>
+                                        <span class="player-name">@b.User?.Name</span>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <div class="court-cell">
+                                        <span class="court-name">@b.Court?.CourtName</span>
+                                        <span class="sport-pill">
+                                            <i class="bi bi-trophy-fill" style="font-size:.65rem"></i>
+                                            @b.Court?.SportType
+                                        </span>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <span class="date-cell">
+                                        <i class="bi bi-calendar3 me-1" style="font-size:.75rem"></i>
+                                        @b.BookingDate.ToString("dd MMM yyyy")
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <span class="amount-val">Rs. @b.TotalAmount</span>
+                                </td>
+
+                                <td>
+                                    <span class="qr-code-cell">@b.QRCode</span>
+                                </td>
+
+                                <td>
+                                    @{
+                                        var sbClass = b.Status switch {
+                                            BookingStatus.Confirmed => "sb-confirmed",
+                                            BookingStatus.Pending   => "sb-pending",
+                                            BookingStatus.Cancelled => "sb-cancelled",
+                                            _ => ""
+                                        };
+                                    }
+                                    <span class="status-badge @sbClass">
+                                        <span class="sd"></span>
+                                        @b.Status
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <div class="action-group">
+                                        <a asp-action="Details" asp-route-id="@b.BookingId"
+                                           class="ab ab-view" title="View Details">
+                                            <i class="bi bi-eye-fill"></i>
+                                        </a>
+                                        <a asp-action="Edit" asp-route-id="@b.BookingId"
+                                           class="ab ab-edit" title="Edit">
+                                            <i class="bi bi-pencil-fill"></i>
+                                        </a>
+                                        @if (b.Status != BookingStatus.Cancelled)
+                                        {
+                                            <button type="button"
+                                                    class="ab ab-cancel"
+                                                    title="Cancel Booking"
+                                                    data-id="@b.BookingId"
+                                                    onclick="openCancelModal(this)">
+                                                <i class="bi bi-x-circle-fill"></i>
+                                            </button>
+                                            <form asp-action="Cancel" asp-route-id="@b.BookingId"
+                                                  method="post" id="cancelForm-@b.BookingId" class="d-none">
+                                                @Html.AntiForgeryToken()
+                                            </form>
+                                        }
+                                        <a asp-action="Delete" asp-route-id="@b.BookingId"
+                                           class="ab ab-delete" title="Delete">
+                                            <i class="bi bi-trash3-fill"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        <tr class="no-results-row" id="noResultsRow" style="display:none;">
+                            <td colspan="8">
+                                <i class="bi bi-search me-2"></i>No bookings match your search.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+<script>
+    // ── Cancel modal ─────────────────────────────────────────────────────
+    var pendingCancelId = null;
+
+    function openCancelModal(btn) {
+        pendingCancelId = btn.dataset.id;
+        document.getElementById('modalBid').textContent = '#' + pendingCancelId;
+        document.getElementById('cancelModal').classList.add('show');
+    }
+
+    document.getElementById('modalCancelBtn')?.addEventListener('click', function () {
+        document.getElementById('cancelModal').classList.remove('show');
+        pendingCancelId = null;
+    });
+
+    document.getElementById('modalConfirmBtn')?.addEventListener('click', function () {
+        if (pendingCancelId) {
+            document.getElementById('cancelForm-' + pendingCancelId).submit();
+        }
+    });
+
+    document.getElementById('cancelModal')?.addEventListener('click', function (e) {
+        if (e.target === this) {
+            this.classList.remove('show');
+            pendingCancelId = null;
+        }
+    });
+
+    // ── Filter chips ─────────────────────────────────────────────────────
+    var filterMap = {
+        'all':       'active-all',
+        'confirmed': 'active-confirmed',
+        'pending':   'active-pending',
+        'cancelled': 'active-cancelled'
+    };
+    var currentFilter = 'all';
+
+    document.querySelectorAll('.bl-filter-chip').forEach(function (chip) {
+        chip.addEventListener('click', function () {
+            document.querySelectorAll('.bl-filter-chip').forEach(function (c) {
+                c.className = 'bl-filter-chip';
+            });
+            var f = chip.dataset.filter;
+            chip.classList.add(filterMap[f]);
+            currentFilter = f;
+            applyFilter();
+        });
+    });
+
+    // ── Search ───────────────────────────────────────────────────────────
+    document.getElementById('searchInput')?.addEventListener('input', applyFilter);
+
+    function applyFilter() {
+        var query  = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+        var rows   = document.querySelectorAll('#bookingBody tr[data-status]');
+        var visible = 0;
+
+        rows.forEach(function (row) {
+            var statusMatch = currentFilter === 'all' || row.dataset.status === currentFilter;
+            var searchMatch = !query || (row.dataset.search || '').includes(query);
+            var show = statusMatch && searchMatch;
+            row.style.display = show ? '' : 'none';
+            if (show) visible++;
+        });
+
+        var noRes = document.getElementById('noResultsRow');
+        if (noRes) noRes.style.display = visible === 0 ? '' : 'none';
+    }
+</script>
+}

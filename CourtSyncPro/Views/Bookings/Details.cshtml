@@ -1,0 +1,456 @@
+﻿@model CourtSyncPro.Models.Entities.Booking
+@using CourtSyncPro.Models.Entities
+@{
+    ViewData["Title"] = "Booking Details";
+}
+
+<style>
+    @@keyframes popIn {
+        0%   { opacity: 0; transform: scale(.88) translateY(24px); }
+        70%  { transform: scale(1.02) translateY(-3px); }
+        100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @@keyframes checkDraw {
+        0%   { stroke-dashoffset: 80; opacity: 0; }
+        40%  { opacity: 1; }
+        100% { stroke-dashoffset: 0; }
+    }
+    @@keyframes circleDraw {
+        from { stroke-dashoffset: 200; }
+        to   { stroke-dashoffset: 0; }
+    }
+    @@keyframes confettiFall {
+        0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+        100% { transform: translateY(120px) rotate(720deg); opacity: 0; }
+    }
+    @@keyframes rowSlide {
+        from { opacity: 0; transform: translateX(-10px); }
+        to   { opacity: 1; transform: translateX(0); }
+    }
+    @@keyframes qrPulse {
+        0%,100% { box-shadow: 0 0 0 0 rgba(168,230,61,.35); }
+        50%     { box-shadow: 0 0 0 10px rgba(168,230,61,0); }
+    }
+    @@keyframes shimmer {
+        0%   { background-position: -600px 0; }
+        100% { background-position: 600px 0; }
+    }
+    @@keyframes fadeUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* LAYOUT */
+    .bd-wrap {
+        min-height: calc(100vh - 130px);
+        display: flex; align-items: center; justify-content: center;
+        padding: 2rem 1rem; position: relative; overflow: hidden;
+    }
+    .bd-blob {
+        position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+    }
+    .bd-blob-1 {
+        width: 340px; height: 340px; top: -80px; right: -80px;
+        background: radial-gradient(circle, rgba(39,174,96,.1) 0%, transparent 70%);
+    }
+    .bd-blob-2 {
+        width: 220px; height: 220px; bottom: 60px; left: -60px;
+        background: radial-gradient(circle, rgba(168,230,61,.08) 0%, transparent 70%);
+    }
+
+    /* CONFETTI PIECES */
+    .confetti-wrap {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        pointer-events: none; z-index: 0; overflow: hidden;
+    }
+    .confetti-piece {
+        position: absolute; width: 8px; height: 8px; border-radius: 2px;
+        animation: confettiFall linear both;
+        opacity: 0;
+    }
+
+    /* CARD */
+    .bd-card {
+        background: var(--surface);
+        border: 1.5px solid rgba(39,174,96,.25);
+        border-radius: 22px;
+        box-shadow: 0 12px 48px rgba(39,174,96,.1), 0 2px 8px rgba(13,59,46,.06);
+        width: 100%; max-width: 520px;
+        position: relative; z-index: 1; overflow: hidden;
+        animation: popIn .55s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    .bd-card::before {
+        content: '';
+        position: absolute; top: 0; left: 0; right: 0; height: 4px;
+        background: linear-gradient(90deg, #27ae60, var(--accent), #27ae60);
+        background-size: 600px 100%;
+        animation: shimmer 2.6s linear infinite;
+        border-radius: 22px 22px 0 0;
+    }
+
+    /* SUCCESS HEADER */
+    .bd-head {
+        padding: 2.2rem 2rem 1.5rem;
+        display: flex; flex-direction: column; align-items: center;
+        border-bottom: 1.5px solid var(--border);
+        text-align: center;
+    }
+
+    /* Animated check circle */
+    .check-circle-wrap {
+        width: 90px; height: 90px; margin-bottom: 1.2rem; position: relative;
+    }
+    .check-circle-wrap svg { width: 90px; height: 90px; }
+    .check-bg {
+        fill: rgba(39,174,96,.1);
+    }
+    .check-ring {
+        fill: none; stroke: #27ae60; stroke-width: 2.5;
+        stroke-dasharray: 200; stroke-dashoffset: 200;
+        animation: circleDraw .6s ease .2s forwards;
+        transform-origin: center; transform: rotate(-90deg);
+    }
+    .check-mark {
+        fill: none; stroke: #27ae60; stroke-width: 3.5;
+        stroke-linecap: round; stroke-linejoin: round;
+        stroke-dasharray: 80; stroke-dashoffset: 80;
+        animation: checkDraw .45s ease .65s forwards;
+    }
+
+    .bd-confirmed-title {
+        font-family: 'Syne', sans-serif; font-weight: 800;
+        font-size: 1.5rem; letter-spacing: -.03em;
+        color: var(--primary); margin: 0 0 4px;
+    }
+    .bd-confirmed-sub { font-size: .83rem; color: var(--text-faint); margin: 0; }
+
+    .booking-ref-badge {
+        display: inline-flex; align-items: center; gap: 7px;
+        background: rgba(39,174,96,.08); border: 1.5px solid rgba(39,174,96,.25);
+        border-radius: 10px; padding: 5px 14px; margin-top: .9rem;
+        font-family: 'Syne', sans-serif; font-weight: 700;
+        font-size: .85rem; color: #1a7a3c;
+    }
+
+    /* STATUS PILL */
+    .status-pill {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 4px 12px; border-radius: 20px; font-size: .75rem; font-weight: 700;
+    }
+    .status-confirmed {
+        background: rgba(39,174,96,.12); color: #1a7a3c;
+        border: 1px solid rgba(39,174,96,.3);
+    }
+    .status-dot-green {
+        width: 6px; height: 6px; background: #27ae60;
+        border-radius: 50%; animation: pulse-dot 2s infinite;
+    }
+
+    /* DETAILS STRIP */
+    .bd-details {
+        padding: 1.3rem 2rem;
+        border-bottom: 1.5px solid var(--border);
+    }
+    .detail-row {
+        display: flex; align-items: center; gap: 11px;
+        padding: 7px 0; border-bottom: 1px solid var(--border);
+        animation: rowSlide .35s ease both;
+    }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-row:nth-child(1) { animation-delay: .1s; }
+    .detail-row:nth-child(2) { animation-delay: .16s; }
+    .detail-row:nth-child(3) { animation-delay: .22s; }
+    .detail-row:nth-child(4) { animation-delay: .28s; }
+    .detail-row:nth-child(5) { animation-delay: .34s; }
+    .detail-row:nth-child(6) { animation-delay: .40s; }
+
+    .detail-icon-wrap {
+        width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(13,59,46,.06);
+    }
+    .detail-icon-wrap i { font-size: .88rem; color: var(--primary-mid); }
+    .detail-label { font-size: .78rem; color: var(--text-faint); min-width: 90px; }
+    .detail-val   { font-size: .88rem; font-weight: 600; color: var(--primary);
+        margin-left: auto; text-align: right; }
+    .detail-val.amount { color: #1a7a3c; font-size: .95rem; }
+
+    /* QR SECTION */
+    .bd-qr {
+        padding: 1.5rem 2rem;
+        display: flex; flex-direction: column; align-items: center;
+        border-bottom: 1.5px solid var(--border);
+        animation: fadeUp .4s ease .35s both;
+    }
+    .qr-label {
+        font-size: .68rem; font-weight: 700; letter-spacing: .1em;
+        text-transform: uppercase; color: var(--text-faint); margin-bottom: 12px;
+        display: flex; align-items: center; gap: 7px;
+    }
+    .qr-label::before, .qr-label::after {
+        content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    .qr-box {
+        background: var(--primary);
+        border-radius: 16px; padding: 1.4rem 2rem;
+        display: flex; flex-direction: column; align-items: center; gap: 10px;
+        animation: qrPulse 2.5s ease-in-out 1s 3;
+        position: relative; overflow: hidden;
+    }
+    .qr-box::before {
+        content: '';
+        position: absolute; inset: 0;
+        background: linear-gradient(135deg, rgba(168,230,61,.06) 0%, transparent 60%);
+        pointer-events: none;
+    }
+
+    /* QR Grid visual */
+    .qr-grid {
+        display: grid; grid-template-columns: repeat(7, 1fr);
+        gap: 3px; width: 112px;
+    }
+    .qr-cell {
+        width: 100%; aspect-ratio: 1;
+        border-radius: 2px;
+        background: var(--accent);
+    }
+    .qr-cell.off { background: rgba(168,230,61,.12); }
+
+    .qr-code-text {
+        font-family: 'Syne', sans-serif; font-weight: 800;
+        font-size: 1.5rem; letter-spacing: .18em;
+        color: var(--accent); margin: 0;
+    }
+    .qr-hint {
+        font-size: .73rem; color: rgba(255,255,255,.45);
+        display: flex; align-items: center; gap: 5px;
+    }
+
+    /* Corner brackets on QR box */
+    .qr-corner {
+        position: absolute; width: 16px; height: 16px;
+        border-color: rgba(168,230,61,.4); border-style: solid;
+    }
+    .qr-corner.tl { top: 8px; left: 8px;  border-width: 2px 0 0 2px; }
+    .qr-corner.tr { top: 8px; right: 8px; border-width: 2px 2px 0 0; }
+    .qr-corner.bl { bottom: 8px; left: 8px;  border-width: 0 0 2px 2px; }
+    .qr-corner.br { bottom: 8px; right: 8px; border-width: 0 2px 2px 0; }
+
+    /* ACTIONS */
+    .bd-actions {
+        padding: 1.4rem 2rem 1.8rem;
+        display: flex; gap: 10px;
+        animation: fadeUp .4s ease .4s both;
+    }
+    .btn-bookings {
+        flex: 1; padding: 11px 0;
+        background: linear-gradient(135deg, var(--primary), var(--primary-mid));
+        color: #fff; border: none; border-radius: 11px;
+        font-family: 'Syne', sans-serif; font-weight: 700; font-size: .9rem;
+        display: flex; align-items: center; justify-content: center; gap: 7px;
+        text-decoration: none; cursor: pointer;
+        transition: transform .2s, box-shadow .2s;
+        box-shadow: 0 4px 18px rgba(13,59,46,.22);
+        position: relative; overflow: hidden;
+    }
+    .btn-bookings::after {
+        content: ''; position: absolute; inset: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent);
+        transform: translateX(-100%); transition: transform .5s;
+    }
+    .btn-bookings:hover::after { transform: translateX(100%); }
+    .btn-bookings:hover {
+        transform: translateY(-2px); box-shadow: 0 8px 28px rgba(13,59,46,.28);
+        color: #fff;
+    }
+    .btn-browse {
+        flex: 1; padding: 11px 0;
+        background: var(--bg); border: 1.5px solid var(--border);
+        border-radius: 11px;
+        font-family: 'Syne', sans-serif; font-weight: 700; font-size: .9rem;
+        color: var(--text-muted); text-decoration: none;
+        display: flex; align-items: center; justify-content: center; gap: 7px;
+        transition: background .2s, border-color .2s, color .2s, transform .2s;
+    }
+    .btn-browse:hover {
+        background: var(--border); color: var(--text-main);
+        transform: translateY(-1px);
+    }
+</style>
+
+<!-- Confetti -->
+<div class="confetti-wrap" id="confettiWrap"></div>
+
+<div class="bd-wrap">
+    <div class="bd-blob bd-blob-1"></div>
+    <div class="bd-blob bd-blob-2"></div>
+
+    <div class="bd-card">
+
+        <!-- Success Header -->
+        <div class="bd-head">
+            <div class="check-circle-wrap">
+                <svg viewBox="0 0 90 90">
+                    <circle class="check-bg" cx="45" cy="45" r="44"/>
+                    <circle class="check-ring" cx="45" cy="45" r="38"/>
+                    <polyline class="check-mark" points="28,45 40,57 63,33"/>
+                </svg>
+            </div>
+            <h2 class="bd-confirmed-title">Booking Confirmed!</h2>
+            <p class="bd-confirmed-sub">Your court is reserved and ready</p>
+            <div class="booking-ref-badge">
+                <i class="bi bi-hash"></i> Booking #@Model.BookingId
+            </div>
+        </div>
+
+        <!-- Details -->
+        <div class="bd-details">
+            @if (Model.User != null)
+            {
+                <div class="detail-row">
+                    <div class="detail-icon-wrap"><i class="bi bi-person-fill"></i></div>
+                    <span class="detail-label">Player</span>
+                    <span class="detail-val">@Model.User.Name</span>
+                </div>
+            }
+            @if (Model.Court != null)
+            {
+                <div class="detail-row">
+                    <div class="detail-icon-wrap"><i class="bi bi-geo-alt-fill"></i></div>
+                    <span class="detail-label">Court</span>
+                    <span class="detail-val">@Model.Court.CourtName</span>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-icon-wrap"><i class="bi bi-trophy-fill"></i></div>
+                    <span class="detail-label">Sport</span>
+                    <span class="detail-val">@Model.Court.SportType</span>
+                </div>
+            }
+            @if (Model.TimeSlot != null)
+            {
+                <div class="detail-row">
+                    <div class="detail-icon-wrap"><i class="bi bi-clock-fill"></i></div>
+                    <span class="detail-label">Time Slot</span>
+                    <span class="detail-val">
+                        @Model.TimeSlot.StartTime.ToString("dd MMM yyyy")
+                        &nbsp;@Model.TimeSlot.StartTime.ToString("HH:mm") – @Model.TimeSlot.EndTime.ToString("HH:mm")
+                    </span>
+                </div>
+            }
+            <div class="detail-row">
+                <div class="detail-icon-wrap"><i class="bi bi-currency-rupee"></i></div>
+                <span class="detail-label">Total Paid</span>
+                <span class="detail-val amount">Rs. @Model.TotalAmount</span>
+            </div>
+            <div class="detail-row">
+                <div class="detail-icon-wrap"><i class="bi bi-patch-check-fill"></i></div>
+                <span class="detail-label">Status</span>
+                <span class="detail-val">
+                    <span class="status-pill status-confirmed">
+                        <span class="status-dot-green"></span>
+                        @Model.Status
+                    </span>
+                </span>
+            </div>
+        </div>
+
+        <!-- QR Section -->
+        <div class="bd-qr">
+            <div class="qr-label" style="width:100%;">Show at venue</div>
+            <div class="qr-box">
+                <div class="qr-corner tl"></div>
+                <div class="qr-corner tr"></div>
+                <div class="qr-corner bl"></div>
+                <div class="qr-corner br"></div>
+                <!-- decorative QR grid -->
+                <div class="qr-grid" id="qrGrid"></div>
+                <div class="qr-code-text">@Model.QRCode</div>
+                <div class="qr-hint">
+                    <i class="bi bi-qr-code"></i> Present this code at the court entrance
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="bd-actions">
+    <a asp-action="Index" class="btn-bookings">
+        <i class="bi bi-calendar-check-fill"></i> All Bookings
+    </a>
+
+    <a asp-controller="Courts" asp-action="Index" class="btn-browse">
+        <i class="bi bi-search"></i> Browse Courts
+    </a>
+
+    @if (Model.Status == BookingStatus.Pending && Model.Payment == null)
+    {
+        <a asp-controller="Payments" asp-action="Pay"
+           asp-route-bookingId="@Model.BookingId"
+           class="btn-bookings">
+            💳 Pay Now
+        </a>
+    }
+    else if (Model.Payment != null && Model.Payment.Status == PaymentStatus.Completed)
+    {
+        <span class="status-pill status-confirmed">✅ Paid</span>
+
+        <a asp-controller="Payments" asp-action="Receipt"
+           asp-route-id="@Model.Payment.PaymentId"
+           class="btn-browse">
+            View Receipt
+        </a>
+    }
+</div>
+
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Confetti burst
+    (function () {
+        var wrap   = document.getElementById('confettiWrap');
+        var colors = ['#a8e63d','#27ae60','#f39c12','#2980b9','#0d3b2e','#c4ff45'];
+        for (var i = 0; i < 48; i++) {
+            var el = document.createElement('div');
+            el.className = 'confetti-piece';
+            el.style.cssText = [
+                'left:'            + Math.random() * 100 + '%;',
+                'top:'             + (Math.random() * -60) + 'px;',
+                'background:'      + colors[Math.floor(Math.random() * colors.length)] + ';',
+                'width:'           + (6 + Math.random() * 6) + 'px;',
+                'height:'          + (6 + Math.random() * 6) + 'px;',
+                'border-radius:'   + (Math.random() > .5 ? '50%' : '2px') + ';',
+                'animation-duration:'  + (1.2 + Math.random() * 1.8) + 's;',
+                'animation-delay:'     + (Math.random() * .8) + 's;',
+                'animation-fill-mode:' + 'both;'
+            ].join('');
+            wrap.appendChild(el);
+        }
+        setTimeout(function () { wrap.style.display = 'none'; }, 3500);
+    })();
+
+    // Decorative QR grid
+    (function () {
+        var grid = document.getElementById('qrGrid');
+        if (!grid) return;
+        // corner squares pattern for 7x7 grid
+        var pattern = [
+            1,1,1,1,1,1,1,
+            1,0,0,0,0,0,1,
+            1,0,1,0,1,0,1,
+            1,0,0,1,0,0,1,
+            1,0,1,0,1,0,1,
+            1,0,0,0,0,0,1,
+            1,1,1,1,1,1,1
+        ];
+        pattern.forEach(function (v) {
+            var cell = document.createElement('div');
+            cell.className = 'qr-cell' + (v ? '' : ' off');
+            grid.appendChild(cell);
+        });
+    })();
+
+
+</script>
+}

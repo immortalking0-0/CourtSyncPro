@@ -1,0 +1,410 @@
+﻿@model CourtSyncPro.Models.ViewModels.OwnerRegisterViewModel
+@{
+    ViewData["Title"] = "Register Your Venue";
+}
+
+<style>
+    .reg-wrapper {
+        min-height: calc(100vh - 130px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1rem;
+    }
+
+    .reg-shell {
+        display: grid;
+        grid-template-columns: 1fr 1.6fr;
+        max-width: 960px;
+        width: 100%;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(13,59,46,.18);
+        animation: fadeUp .5s ease both;
+    }
+
+    /* LEFT PANEL */
+    .reg-left {
+        background: var(--primary);
+        padding: 3rem 2rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: relative;
+        overflow: hidden;
+    }
+    .reg-left::before {
+        content: '';
+        position: absolute;
+        top: -60px; right: -60px;
+        width: 200px; height: 200px;
+        border-radius: 50%;
+        background: rgba(168,230,61,.07);
+    }
+    .reg-left::after {
+        content: '';
+        position: absolute;
+        bottom: -50px; left: -40px;
+        width: 160px; height: 160px;
+        border-radius: 50%;
+        background: rgba(168,230,61,.05);
+    }
+
+    .reg-left-brand {
+        display: flex; align-items: center; gap: 10px;
+        font-family: 'Syne', sans-serif;
+        font-weight: 800; font-size: 1.1rem;
+        color: var(--accent);
+        position: relative; z-index: 1;
+    }
+    .reg-left-brand-icon {
+        width: 34px; height: 34px;
+        background: var(--accent);
+        border-radius: 9px;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .reg-left-brand-icon i { color: var(--primary); font-size: .95rem; }
+
+    .reg-left-body { position: relative; z-index: 1; }
+    .reg-left-body h2 {
+        font-family: 'Syne', sans-serif;
+        font-size: 1.7rem; font-weight: 800;
+        color: #fff; line-height: 1.2;
+        letter-spacing: -.03em;
+        margin-bottom: .75rem;
+    }
+    .reg-left-body h2 span { color: var(--accent); }
+    .reg-left-body p {
+        color: rgba(255,255,255,.5);
+        font-size: .85rem; line-height: 1.65;
+        margin: 0;
+    }
+
+    .reg-steps {
+        position: relative; z-index: 1;
+        display: flex; flex-direction: column; gap: 0;
+    }
+    .reg-step {
+        display: flex; gap: 12px;
+        padding-bottom: 20px;
+        position: relative;
+    }
+    .reg-step:not(:last-child)::before {
+        content: '';
+        position: absolute;
+        left: 13px; top: 28px;
+        width: 1px; height: calc(100% - 14px);
+        background: rgba(168,230,61,.2);
+    }
+    .reg-step-num {
+        width: 28px; height: 28px; flex-shrink: 0;
+        background: rgba(168,230,61,.12);
+        border: 1px solid rgba(168,230,61,.28);
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Syne', sans-serif;
+        font-size: .72rem; font-weight: 800;
+        color: var(--accent);
+    }
+    .reg-step-text strong {
+        display: block;
+        color: rgba(255,255,255,.85);
+        font-size: .85rem; font-weight: 600;
+        line-height: 1.3;
+    }
+    .reg-step-text span {
+        color: rgba(255,255,255,.4);
+        font-size: .78rem;
+    }
+
+    /* RIGHT PANEL */
+    .reg-right {
+        background: #fff;
+        padding: 2.5rem 2.5rem;
+        overflow-y: auto;
+        max-height: 90vh;
+    }
+    .reg-right::-webkit-scrollbar { width: 4px; }
+    .reg-right::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .reg-right h3 {
+        font-family: 'Syne', sans-serif;
+        font-weight: 800; font-size: 1.4rem;
+        color: var(--primary);
+        letter-spacing: -.02em;
+        margin-bottom: .25rem;
+    }
+    .reg-right .sub {
+        color: var(--text-faint); font-size: .83rem;
+        margin-bottom: 1.75rem;
+    }
+
+    /* Section label */
+    .form-section-label {
+        font-size: .7rem;
+        font-weight: 700;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: var(--text-faint);
+        margin: 1.25rem 0 .75rem;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .form-section-label::after {
+        content: '';
+        flex: 1; height: 1px;
+        background: var(--border);
+    }
+
+    /* Input fields */
+    .input-field { margin-bottom: 1rem; }
+    .input-field label {
+        display: block; font-size: .78rem; font-weight: 600;
+        color: var(--text-muted); margin-bottom: 4px;
+        text-transform: uppercase; letter-spacing: .04em;
+    }
+    .input-field .field-wrap { position: relative; }
+    .input-field .field-icon {
+        position: absolute; left: 12px; top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-faint); font-size: .9rem;
+        pointer-events: none; transition: color .2s;
+    }
+    .input-field input.form-control {
+        padding-left: 36px;
+        border: 1.5px solid var(--border);
+        border-radius: 10px;
+        font-size: .88rem; height: 42px;
+        transition: border-color .2s, box-shadow .2s;
+    }
+    .input-field input.form-control:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(168,230,61,.18);
+        outline: none;
+    }
+    .input-field .field-wrap:focus-within .field-icon { color: var(--primary); }
+
+    /* Hint text */
+    .field-hint {
+        font-size: .74rem; color: var(--text-faint);
+        margin-top: 4px; display: flex; align-items: center; gap: 4px;
+    }
+    .field-hint i { font-size: .75rem; }
+
+    /* Pending notice */
+    .pending-notice {
+        background: #fffbeb;
+        border: 1.5px solid #f4d03f;
+        border-radius: 10px;
+        padding: 12px 14px;
+        display: flex; gap: 10px; align-items: flex-start;
+        margin: 1.25rem 0;
+    }
+    .pending-notice i { color: #d4ac0d; font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+    .pending-notice p { margin: 0; font-size: .8rem; color: #7a6010; line-height: 1.5; }
+    .pending-notice strong { color: #5a4608; }
+
+    /* Submit */
+    .btn-register {
+        width: 100%; height: 46px;
+        background: var(--primary);
+        color: #fff; border: none;
+        border-radius: 10px;
+        font-family: 'Syne', sans-serif;
+        font-weight: 700; font-size: .92rem;
+        cursor: pointer;
+        transition: background .2s, transform .2s, box-shadow .2s;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-register:hover {
+        background: var(--primary-mid);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(13,59,46,.25);
+    }
+    .btn-register:active { transform: translateY(0); }
+
+    .reg-footer-links {
+        text-align: center; font-size: .8rem;
+        color: var(--text-faint); margin-top: 1rem;
+    }
+    .reg-footer-links a {
+        font-weight: 600; text-decoration: none; color: var(--primary);
+    }
+    .reg-footer-links a:hover { opacity: .75; }
+
+    @@media (max-width: 640px) {
+        .reg-shell { grid-template-columns: 1fr; }
+        .reg-left  { display: none; }
+        .reg-right { max-height: none; }
+    }
+</style>
+
+<div class="reg-wrapper">
+    <div class="reg-shell">
+
+        <!-- LEFT panel -->
+        <div class="reg-left">
+            <div class="reg-left-brand">
+                <div class="reg-left-brand-icon">
+                    <i class="bi bi-trophy-fill"></i>
+                </div>
+                CourtSync Pro
+            </div>
+
+            <div class="reg-left-body">
+                <h2>List your<br>venue &amp; <span>grow.</span></h2>
+                <p>Join hundreds of court owners and start receiving bookings from verified players across Pakistan.</p>
+            </div>
+
+            <div class="reg-steps">
+                <div class="reg-step">
+                    <div class="reg-step-num">1</div>
+                    <div class="reg-step-text">
+                        <strong>Submit your details</strong>
+                        <span>Fill out the registration form</span>
+                    </div>
+                </div>
+                <div class="reg-step">
+                    <div class="reg-step-num">2</div>
+                    <div class="reg-step-text">
+                        <strong>Admin verification</strong>
+                        <span>Reviewed within 24 hours</span>
+                    </div>
+                </div>
+                <div class="reg-step">
+                    <div class="reg-step-num">3</div>
+                    <div class="reg-step-text">
+                        <strong>Go live</strong>
+                        <span>Start listing courts &amp; accepting bookings</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT panel: form -->
+        <div class="reg-right">
+            <h3>Register your venue</h3>
+            <p class="sub">All fields are required for verification.</p>
+
+            <form asp-action="RegisterOwner" method="post" novalidate>
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3"></div>
+
+                <!-- Venue info -->
+                <div class="form-section-label">Venue details</div>
+
+                <div class="input-field">
+                    <label asp-for="BusinessName">Business / Venue name</label>
+                    <div class="field-wrap">
+                        <input asp-for="BusinessName" class="form-control" placeholder="e.g. Champions Arena" autofocus />
+                        <i class="bi bi-building field-icon"></i>
+                    </div>
+                    <span asp-validation-for="BusinessName" class="text-danger" style="font-size:.76rem;"></span>
+                </div>
+
+                <div class="row g-2">
+                    <div class="col-7">
+                        <div class="input-field mb-0">
+                            <label asp-for="Email">Business email</label>
+                            <div class="field-wrap">
+                                <input asp-for="Email" class="form-control" placeholder="owner@venue.com" />
+                                <i class="bi bi-envelope field-icon"></i>
+                            </div>
+                            <span asp-validation-for="Email" class="text-danger" style="font-size:.76rem;"></span>
+                        </div>
+                    </div>
+                    <div class="col-5">
+                        <div class="input-field mb-0">
+                            <label asp-for="City">City</label>
+                            <div class="field-wrap">
+                                <input asp-for="City" class="form-control" placeholder="e.g. Lahore" />
+                                <i class="bi bi-geo-alt field-icon"></i>
+                            </div>
+                            <span asp-validation-for="City" class="text-danger" style="font-size:.76rem;"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-field" style="margin-top:1rem;">
+                    <label asp-for="Phone">Phone number</label>
+                    <div class="field-wrap">
+                        <input asp-for="Phone" class="form-control" placeholder="03XX-XXXXXXX" />
+                        <i class="bi bi-phone field-icon"></i>
+                    </div>
+                    <span asp-validation-for="Phone" class="text-danger" style="font-size:.76rem;"></span>
+                </div>
+
+                <!-- Identity -->
+                <div class="form-section-label">Identity verification</div>
+
+                <div class="input-field">
+                    <label asp-for="NationalID">CNIC / National ID</label>
+                    <div class="field-wrap">
+                        <input asp-for="NationalID" class="form-control" placeholder="XXXXX-XXXXXXX-X" />
+                        <i class="bi bi-card-text field-icon"></i>
+                    </div>
+                    <span asp-validation-for="NationalID" class="text-danger" style="font-size:.76rem;"></span>
+                    <div class="field-hint">
+                        <i class="bi bi-shield-check"></i>
+                        Used for verification only — never shared publicly.
+                    </div>
+                </div>
+
+                <!-- Password -->
+                <div class="form-section-label">Set a password</div>
+
+                <div class="row g-2">
+                    <div class="col-6">
+                        <div class="input-field mb-0">
+                            <label asp-for="Password">Password</label>
+                            <div class="field-wrap">
+                                <input asp-for="Password" class="form-control" placeholder="Min. 8 characters" id="pwField" />
+                                <i class="bi bi-lock field-icon"></i>
+                            </div>
+                            <span asp-validation-for="Password" class="text-danger" style="font-size:.76rem;"></span>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="input-field mb-0">
+                            <label asp-for="ConfirmPassword">Confirm password</label>
+                            <div class="field-wrap">
+                                <input asp-for="ConfirmPassword" class="form-control" placeholder="Repeat password" />
+                                <i class="bi bi-lock-fill field-icon"></i>
+                            </div>
+                            <span asp-validation-for="ConfirmPassword" class="text-danger" style="font-size:.76rem;"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pending notice -->
+                <div class="pending-notice">
+                    <i class="bi bi-hourglass-split"></i>
+                    <p>
+                        <strong>Pending review.</strong>
+                        After submitting, an admin will verify your account before you can list courts — usually within 24 hours.
+                    </p>
+                </div>
+
+                <button type="submit" class="btn-register">
+                    <i class="bi bi-send-fill"></i>
+                    Submit for Verification
+                </button>
+            </form>
+
+            <div class="reg-footer-links">
+                Already have an owner account?
+                <a asp-controller="Account" asp-action="Login">Sign in →</a>
+                &nbsp;·&nbsp;
+                Want to book courts?
+                <a asp-controller="Account" asp-action="RegisterUser">Player signup →</a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

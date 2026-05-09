@@ -1,0 +1,93 @@
+﻿@model IEnumerable<CourtSyncPro.Models.Entities.TimeSlot>
+@{
+    ViewData["Title"] = "Manage Time Slots";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0" style="color:var(--primary);">
+        <i class="bi bi-clock me-2"></i>Slots for @ViewBag.Court.CourtName
+    </h4>
+    <div class="d-flex gap-2">
+        <a asp-action="Create" asp-route-courtId="@ViewBag.Court.CourtId"
+               class="btn btn-accent">
+            <i class="bi bi-plus-circle me-1"></i> Add Slot
+        </a>
+        <a asp-controller="Courts" asp-action="Dashboard"
+               class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back
+        </a>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="card p-5 text-center">
+        <div style="font-size:3rem;">⏰</div>
+        <h5 class="mt-3">No time slots added yet</h5>
+        <p class="text-muted">Players cannot book this court until you add available time slots.</p>
+        <a asp-action="Create" asp-route-courtId="@ViewBag.Court.CourtId"
+               class="btn btn-accent mx-auto" style="width:fit-content;">
+            <i class="bi bi-plus-circle me-1"></i> Add First Slot
+        </a>
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-bordered align-middle bg-white">
+            <thead style="background:var(--primary); color:#fff;">
+                <tr>
+                    <th>Date</th>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>Duration</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var slot in Model)
+                {
+                    var duration = (slot.EndTime - slot.StartTime).TotalHours;
+                    <tr>
+                        <td>@slot.StartTime.ToString("dd MMM yyyy")</td>
+                        <td>@slot.StartTime.ToString("HH:mm")</td>
+                        <td>@slot.EndTime.ToString("HH:mm")</td>
+                        <td>@duration hrs</td>
+                        <td>
+                            @if (slot.IsBlocked)
+                            {
+                                <span class="badge bg-danger">Blocked</span>
+                            }
+                            else if (!slot.IsAvailable)
+                            {
+                                <span class="badge bg-warning text-dark">Booked</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">Available</span>
+                            }
+                        </td>
+                        <td>
+                            @if (slot.IsAvailable && !slot.IsBlocked)
+                            {
+                                <form asp-action="Delete" asp-route-id="@slot.SlotId"
+                                      method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button class="btn btn-sm btn-outline-danger"
+                                            onclick="return confirm('Remove this slot?')">
+                                        <i class="bi bi-trash"></i> Remove
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <span class="text-muted small">Cannot remove</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

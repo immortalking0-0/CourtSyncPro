@@ -1,0 +1,480 @@
+﻿@model CourtSyncPro.Models.ViewModels.UserRegisterViewModel
+@{
+    ViewData["Title"] = "Sign Up";
+}
+
+<style>
+    @@keyframes floatBall {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50%       { transform: translateY(-18px) rotate(8deg); }
+    }
+    @@keyframes floatBall2 {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50%       { transform: translateY(-12px) rotate(-6deg); }
+    }
+    @@keyframes shimmer {
+        0%   { background-position: -400px 0; }
+        100% { background-position: 400px 0; }
+    }
+    @@keyframes popIn {
+        0%   { opacity: 0; transform: scale(.88) translateY(24px); }
+        70%  { transform: scale(1.02) translateY(-3px); }
+        100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @@keyframes labelSlide {
+        from { opacity: 0; transform: translateX(-8px); }
+        to   { opacity: 1; transform: translateX(0); }
+    }
+
+    .register-wrap {
+        min-height: calc(100vh - 130px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Floating decorative blobs */
+    .reg-blob {
+        position: fixed;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 0;
+    }
+    .reg-blob-1 {
+        width: 320px; height: 320px;
+        background: radial-gradient(circle, rgba(168,230,61,.13) 0%, transparent 70%);
+        top: -80px; right: -80px;
+        animation: floatBall 7s ease-in-out infinite;
+    }
+    .reg-blob-2 {
+        width: 220px; height: 220px;
+        background: radial-gradient(circle, rgba(13,59,46,.08) 0%, transparent 70%);
+        bottom: 40px; left: -60px;
+        animation: floatBall2 9s ease-in-out infinite;
+    }
+    .reg-blob-3 {
+        width: 140px; height: 140px;
+        background: radial-gradient(circle, rgba(168,230,61,.09) 0%, transparent 70%);
+        bottom: 30%; right: 5%;
+        animation: floatBall 11s ease-in-out infinite reverse;
+    }
+
+    /* Card */
+    .reg-card {
+        background: var(--surface);
+        border: 1.5px solid var(--border);
+        border-radius: 22px;
+        box-shadow: 0 12px 48px rgba(13,59,46,.12), 0 2px 8px rgba(13,59,46,.06);
+        padding: 2.5rem 2.2rem;
+        width: 100%;
+        max-width: 480px;
+        position: relative;
+        z-index: 1;
+        animation: popIn .55s cubic-bezier(.34,1.56,.64,1) both;
+        overflow: hidden;
+    }
+
+    /* Top accent bar with shimmer */
+    .reg-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--accent), #c4ff45, var(--accent));
+        background-size: 400px 100%;
+        animation: shimmer 2.8s linear infinite;
+        border-radius: 22px 22px 0 0;
+    }
+
+    /* Icon header */
+    .reg-icon-wrap {
+        width: 72px; height: 72px;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-mid) 100%);
+        border-radius: 20px;
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 1rem;
+        box-shadow: 0 8px 24px rgba(13,59,46,.25);
+        position: relative;
+        transition: transform .3s;
+    }
+    .reg-icon-wrap:hover { transform: rotate(-6deg) scale(1.06); }
+    .reg-icon-wrap i { font-size: 1.9rem; color: var(--accent); }
+    .reg-icon-wrap::after {
+        content: '';
+        position: absolute;
+        inset: -4px;
+        border-radius: 24px;
+        border: 2px dashed rgba(168,230,61,.3);
+        animation: spin 12s linear infinite;
+    }
+    @@keyframes spin { to { transform: rotate(360deg); } }
+
+    .reg-title {
+        font-family: 'Syne', sans-serif;
+        font-size: 1.55rem;
+        font-weight: 800;
+        color: var(--primary);
+        letter-spacing: -.03em;
+        margin: 0;
+    }
+    .reg-subtitle { color: var(--text-faint); font-size: .875rem; margin-top: 3px; }
+
+    /* Steps indicator */
+    .field-group {
+        animation: labelSlide .35s ease both;
+    }
+    .field-group:nth-child(1) { animation-delay: .08s; }
+    .field-group:nth-child(2) { animation-delay: .13s; }
+    .field-group:nth-child(3) { animation-delay: .18s; }
+    .field-group:nth-child(4) { animation-delay: .23s; }
+    .field-group:nth-child(5) { animation-delay: .28s; }
+
+    /* Input group override */
+    .reg-input-group {
+        display: flex;
+        border: 1.5px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+        transition: border-color .2s, box-shadow .2s;
+        background: var(--surface);
+    }
+    .reg-input-group:focus-within {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3.5px rgba(168,230,61,.18);
+    }
+    .reg-input-group .ig-icon {
+        width: 44px;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(168,230,61,.07);
+        border-right: 1.5px solid var(--border);
+        color: var(--primary-mid);
+        font-size: 1rem;
+        flex-shrink: 0;
+        transition: background .2s, color .2s;
+    }
+    .reg-input-group:focus-within .ig-icon {
+        background: rgba(168,230,61,.15);
+        color: var(--accent-dark);
+    }
+    .reg-input-group input {
+        flex: 1;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        padding: 10px 14px;
+        font-size: .9rem;
+        color: var(--text-main);
+        background: transparent;
+        outline: none;
+    }
+    .reg-input-group input::placeholder { color: var(--text-faint); }
+
+    /* Toggle password btn */
+    .pwd-toggle {
+        width: 40px;
+        display: flex; align-items: center; justify-content: center;
+        background: transparent; border: none; cursor: pointer;
+        color: var(--text-faint);
+        transition: color .2s;
+    }
+    .pwd-toggle:hover { color: var(--primary); }
+
+    /* Password strength bar */
+    .strength-bar-wrap {
+        height: 4px;
+        background: var(--border);
+        border-radius: 4px;
+        margin-top: 6px;
+        overflow: hidden;
+    }
+    .strength-bar {
+        height: 100%;
+        width: 0%;
+        border-radius: 4px;
+        transition: width .4s ease, background .4s;
+    }
+    .strength-label {
+        font-size: .72rem;
+        color: var(--text-faint);
+        margin-top: 3px;
+        min-height: 1em;
+        transition: color .3s;
+    }
+
+    /* Divider */
+    .reg-divider {
+        display: flex; align-items: center; gap: 10px;
+        color: var(--text-faint); font-size: .8rem;
+        margin: 1.2rem 0;
+    }
+    .reg-divider::before, .reg-divider::after {
+        content: ''; flex: 1;
+        height: 1px; background: var(--border);
+    }
+
+    /* Submit button */
+    .btn-register {
+        width: 100%;
+        padding: 11px;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-mid) 100%);
+        color: #fff;
+        border: none;
+        border-radius: 11px;
+        font-family: 'Syne', sans-serif;
+        font-weight: 700;
+        font-size: .95rem;
+        letter-spacing: .01em;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        cursor: pointer;
+        transition: transform .2s, box-shadow .2s, background .2s;
+        box-shadow: 0 4px 18px rgba(13,59,46,.22);
+        position: relative;
+        overflow: hidden;
+    }
+    .btn-register::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent);
+        transform: translateX(-100%);
+        transition: transform .5s;
+    }
+    .btn-register:hover::after { transform: translateX(100%); }
+    .btn-register:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 28px rgba(13,59,46,.28);
+    }
+    .btn-register:active { transform: translateY(0); }
+
+    /* Link pills */
+    .reg-link-pill {
+        display: inline-flex; align-items: center; gap: 5px;
+        padding: 6px 14px; border-radius: 20px; font-size: .82rem;
+        font-weight: 600; text-decoration: none;
+        transition: background .2s, transform .2s;
+    }
+    .reg-link-pill.pill-primary {
+        background: rgba(13,59,46,.07);
+        color: var(--primary);
+    }
+    .reg-link-pill.pill-primary:hover {
+        background: rgba(13,59,46,.13);
+        transform: translateX(2px);
+    }
+    .reg-link-pill.pill-accent {
+        background: rgba(168,230,61,.15);
+        color: var(--accent-dark);
+    }
+    .reg-link-pill.pill-accent:hover {
+        background: rgba(168,230,61,.28);
+        transform: translateX(2px);
+    }
+
+    /* Validation */
+    .field-error {
+        font-size: .75rem;
+        color: var(--danger);
+        margin-top: 4px;
+        display: flex; align-items: center; gap: 4px;
+        animation: fadeUp .2s ease both;
+    }
+    .field-error::before { content: '\f33a'; font-family: 'bootstrap-icons'; font-size: .78rem; }
+</style>
+
+<div class="register-wrap">
+    <!-- Blobs -->
+    <div class="reg-blob reg-blob-1"></div>
+    <div class="reg-blob reg-blob-2"></div>
+    <div class="reg-blob reg-blob-3"></div>
+
+    <div class="reg-card">
+
+        <!-- Header -->
+        <div class="text-center mb-4">
+            <div class="reg-icon-wrap">
+                <i class="bi bi-person-plus-fill"></i>
+            </div>
+            <h4 class="reg-title">Create Player Account</h4>
+            <p class="reg-subtitle">Join CourtSync Pro and start booking courts today</p>
+
+            <!-- Feature pills -->
+            <div class="d-flex justify-content-center gap-2 mt-3 flex-wrap">
+                <span style="background:rgba(168,230,61,.12);color:var(--accent-dark);font-size:.72rem;font-weight:600;padding:3px 10px;border-radius:20px;">
+                    <i class="bi bi-lightning-fill me-1"></i>Instant Booking
+                </span>
+                <span style="background:rgba(13,59,46,.07);color:var(--primary);font-size:.72rem;font-weight:600;padding:3px 10px;border-radius:20px;">
+                    <i class="bi bi-shield-check me-1"></i>Secure
+                </span>
+                <span style="background:rgba(168,230,61,.12);color:var(--accent-dark);font-size:.72rem;font-weight:600;padding:3px 10px;border-radius:20px;">
+                    <i class="bi bi-star-fill me-1"></i>Free
+                </span>
+            </div>
+        </div>
+
+        <form asp-action="RegisterUser" method="post" id="registerForm" novalidate>
+            @Html.AntiForgeryToken()
+
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3"></div>
+
+            <!-- Full Name -->
+            <div class="mb-3 field-group">
+                <label asp-for="Name" class="form-label">Full Name</label>
+                <div class="reg-input-group">
+                    <span class="ig-icon"><i class="bi bi-person"></i></span>
+                    <input asp-for="Name" placeholder="e.g. Ahmed Hassan" autocomplete="name" />
+                </div>
+                <span asp-validation-for="Name" class="field-error"></span>
+            </div>
+
+            <!-- Email -->
+            <div class="mb-3 field-group">
+                <label asp-for="Email" class="form-label">Email Address</label>
+                <div class="reg-input-group">
+                    <span class="ig-icon"><i class="bi bi-envelope"></i></span>
+                    <input asp-for="Email" placeholder="you@email.com" autocomplete="email" />
+                </div>
+                <span asp-validation-for="Email" class="field-error"></span>
+            </div>
+
+            <!-- Phone -->
+            <div class="mb-3 field-group">
+                <label asp-for="PhoneNumber" class="form-label">Phone Number</label>
+                <div class="reg-input-group">
+                    <span class="ig-icon"><i class="bi bi-phone"></i></span>
+                    <input asp-for="PhoneNumber" placeholder="03XX-XXXXXXX" autocomplete="tel" />
+                </div>
+                <span asp-validation-for="PhoneNumber" class="field-error"></span>
+            </div>
+
+            <!-- Password -->
+            <div class="mb-1 field-group">
+                <label asp-for="Password" class="form-label">Password</label>
+                <div class="reg-input-group">
+                    <span class="ig-icon"><i class="bi bi-lock"></i></span>
+                    <input asp-for="Password" id="passwordInput" placeholder="Min. 8 characters" autocomplete="new-password" />
+                    <button type="button" class="pwd-toggle" id="togglePwd" tabindex="-1">
+                        <i class="bi bi-eye" id="eyeIcon"></i>
+                    </button>
+                </div>
+                <div class="strength-bar-wrap">
+                    <div class="strength-bar" id="strengthBar"></div>
+                </div>
+                <div class="strength-label" id="strengthLabel"></div>
+                <span asp-validation-for="Password" class="field-error"></span>
+            </div>
+
+            <!-- Confirm Password -->
+            <div class="mb-4 field-group">
+                <label asp-for="ConfirmPassword" class="form-label">Confirm Password</label>
+                <div class="reg-input-group" id="confirmGroup">
+                    <span class="ig-icon"><i class="bi bi-lock-fill"></i></span>
+                    <input asp-for="ConfirmPassword" id="confirmInput" placeholder="Repeat password" autocomplete="new-password" />
+                    <span class="pwd-toggle" id="matchIcon" style="pointer-events:none;font-size:.85rem;"></span>
+                </div>
+                <span asp-validation-for="ConfirmPassword" class="field-error"></span>
+            </div>
+
+            <button type="submit" class="btn-register">
+                <i class="bi bi-person-check-fill"></i>
+                Create My Account
+            </button>
+        </form>
+
+        <div class="reg-divider">or</div>
+
+        <div class="d-flex flex-column align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2 flex-wrap justify-content-center" style="font-size:.83rem;color:var(--text-faint);">
+                Already have an account?
+                <a asp-controller="Account" asp-action="Login" class="reg-link-pill pill-primary">
+                    <i class="bi bi-box-arrow-in-right"></i> Login here
+                </a>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-wrap justify-content-center" style="font-size:.83rem;color:var(--text-faint);">
+                Court owner?
+                <a asp-controller="Account" asp-action="RegisterOwner" class="reg-link-pill pill-accent">
+                    <i class="bi bi-shop"></i> Register your venue
+                </a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+
+    <script>
+        // Password visibility toggle
+        (function () {
+            var inp = document.getElementById('passwordInput');
+            var btn = document.getElementById('togglePwd');
+            var ico = document.getElementById('eyeIcon');
+            if (!btn || !inp) return;
+            btn.addEventListener('click', function () {
+                var show = inp.type === 'password';
+                inp.type = show ? 'text' : 'password';
+                ico.className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+            });
+        })();
+
+        // Password strength meter
+        (function () {
+            var inp = document.getElementById('passwordInput');
+            var bar = document.getElementById('strengthBar');
+            var lbl = document.getElementById('strengthLabel');
+            if (!inp) return;
+            inp.addEventListener('input', function () {
+                var val = inp.value;
+                var score = 0;
+                if (val.length >= 8)  score++;
+                if (/[A-Z]/.test(val)) score++;
+                if (/[0-9]/.test(val)) score++;
+                if (/[^A-Za-z0-9]/.test(val)) score++;
+                var configs = [
+                    { w: '0%',   bg: 'transparent', txt: '' },
+                    { w: '25%',  bg: '#e74c3c',      txt: '⚠ Weak' },
+                    { w: '50%',  bg: '#f39c12',      txt: '▲ Fair' },
+                    { w: '75%',  bg: '#3498db',      txt: '✔ Good' },
+                    { w: '100%', bg: '#27ae60',      txt: '✦ Strong' },
+                ];
+                var c = configs[val.length === 0 ? 0 : score] || configs[1];
+                bar.style.width = c.w;
+                bar.style.background = c.bg;
+                lbl.textContent = c.txt;
+                lbl.style.color = c.bg;
+            });
+        })();
+
+        // Confirm password match indicator
+        (function () {
+            var pwd = document.getElementById('passwordInput');
+            var cfm = document.getElementById('confirmInput');
+            var grp = document.getElementById('confirmGroup');
+            var ico = document.getElementById('matchIcon');
+            if (!cfm) return;
+            function check() {
+                if (!cfm.value) { grp.style.borderColor = ''; ico.textContent = ''; return; }
+                var match = pwd.value === cfm.value;
+                grp.style.borderColor = match ? 'var(--success)' : 'var(--danger)';
+                ico.innerHTML = match
+                    ? '<i class="bi bi-check-circle-fill" style="color:var(--success)"></i>'
+                    : '<i class="bi bi-x-circle-fill" style="color:var(--danger)"></i>';
+            }
+            cfm.addEventListener('input', check);
+            pwd.addEventListener('input', check);
+        })();
+
+        // Input focus ripple effect
+        document.querySelectorAll('.reg-input-group input').forEach(function(inp) {
+            inp.addEventListener('focus', function() {
+                this.closest('.reg-input-group').style.transform = 'scale(1.008)';
+            });
+            inp.addEventListener('blur', function() {
+                this.closest('.reg-input-group').style.transform = '';
+            });
+        });
+    </script>
+}

@@ -1,0 +1,393 @@
+﻿@model IEnumerable<CourtSyncPro.Models.Entities.CourtOwner>
+@{
+    ViewData["Title"] = "Pending Owner Approvals";
+}
+
+<style>
+    @@keyframes slideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @@keyframes rowIn {
+        from { opacity: 0; transform: translateX(-12px); }
+        to   { opacity: 1; transform: translateX(0); }
+    }
+    @@keyframes spinOnce {
+        from { transform: rotate(0deg); }
+        to   { transform: rotate(360deg); }
+    }
+
+    /* PAGE HEADER */
+    .po-header {
+        display: flex; align-items: center; justify-content: space-between;
+        flex-wrap: wrap; gap: 12px; margin-bottom: 2rem;
+        animation: slideUp .4s ease both;
+    }
+    .po-title-group { display: flex; align-items: center; gap: 14px; }
+    .po-title-icon {
+        width: 48px; height: 48px; background: var(--primary);
+        border-radius: 14px; display: flex; align-items: center;
+        justify-content: center; flex-shrink: 0;
+        box-shadow: 0 4px 16px rgba(13,59,46,.2);
+    }
+    .po-title-icon i { font-size: 1.3rem; color: var(--accent); }
+    .po-title { font-family: 'Syne',sans-serif; font-weight: 800; font-size: 1.5rem;
+        letter-spacing: -.03em; color: var(--primary); margin: 0; }
+    .po-title-sub { font-size: .8rem; color: var(--text-faint); margin: 0; }
+
+    .po-count-badge {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: rgba(243,156,18,.1); border: 1.5px solid rgba(243,156,18,.35);
+        border-radius: 20px; padding: 5px 14px;
+        font-size: .78rem; font-weight: 700; color: #b57a00;
+    }
+    .po-count-dot {
+        width: 8px; height: 8px; background: #f39c12;
+        border-radius: 50%; animation: pulse-dot 1.8s infinite;
+    }
+
+    /* EMPTY STATE */
+    .empty-state {
+        text-align: center; padding: 4rem 2rem;
+        background: var(--surface); border: 1.5px solid var(--border);
+        border-radius: 20px; animation: slideUp .45s ease both;
+    }
+    .empty-icon-wrap {
+        width: 80px; height: 80px; margin: 0 auto 1.2rem;
+        background: rgba(39,174,96,.1); border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .empty-icon-wrap i { font-size: 2rem; color: #1a7a3c; }
+    .empty-title { font-family: 'Syne',sans-serif; font-weight: 800;
+        font-size: 1.3rem; color: var(--primary); margin-bottom: 6px; }
+    .empty-sub { color: var(--text-faint); font-size: .88rem; }
+
+    /* OWNER CARDS GRID */
+    .owner-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+        gap: 18px;
+    }
+
+    .owner-card {
+        background: var(--surface);
+        border: 1.5px solid var(--border);
+        border-radius: 18px; overflow: hidden;
+        transition: transform .22s, box-shadow .22s;
+        animation: rowIn .4s ease both;
+        position: relative;
+    }
+    .owner-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 32px rgba(13,59,46,.1);
+    }
+    .owner-card::before {
+        content: ''; position: absolute;
+        top: 0; left: 0; right: 0; height: 3px;
+        background: linear-gradient(90deg, #f39c12, #f1c40f);
+    }
+
+    /* stagger */
+    .owner-card:nth-child(1)  { animation-delay: .06s; }
+    .owner-card:nth-child(2)  { animation-delay: .12s; }
+    .owner-card:nth-child(3)  { animation-delay: .18s; }
+    .owner-card:nth-child(4)  { animation-delay: .24s; }
+    .owner-card:nth-child(5)  { animation-delay: .30s; }
+    .owner-card:nth-child(6)  { animation-delay: .36s; }
+
+    /* Card header band */
+    .owner-card-head {
+        padding: 1.2rem 1.4rem .9rem;
+        display: flex; align-items: flex-start; gap: 13px;
+        border-bottom: 1.5px solid var(--border);
+    }
+    .owner-avatar {
+        width: 46px; height: 46px; border-radius: 13px; flex-shrink: 0;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-mid) 100%);
+        display: flex; align-items: center; justify-content: center;
+        font-family: 'Syne',sans-serif; font-weight: 800;
+        font-size: 1.1rem; color: var(--accent);
+        box-shadow: 0 3px 10px rgba(13,59,46,.2);
+    }
+    .owner-business { font-family: 'Syne',sans-serif; font-weight: 700;
+        font-size: 1rem; color: var(--primary); line-height: 1.2; margin: 0; }
+    .owner-reg-date { font-size: .73rem; color: var(--text-faint); margin-top: 2px; }
+    .pending-pill {
+        margin-left: auto; flex-shrink: 0;
+        background: rgba(243,156,18,.12); border: 1px solid rgba(243,156,18,.3);
+        color: #b57a00; font-size: .68rem; font-weight: 700;
+        padding: 3px 9px; border-radius: 20px; letter-spacing: .04em;
+        text-transform: uppercase;
+    }
+
+    /* Card body details */
+    .owner-card-body { padding: 1rem 1.4rem; }
+    .detail-row {
+        display: flex; align-items: center; gap: 9px;
+        font-size: .83rem; color: var(--text-muted);
+        padding: 5px 0; border-bottom: 1px solid var(--border);
+    }
+    .detail-row:last-of-type { border-bottom: none; }
+    .detail-row i { font-size: .9rem; color: var(--primary-mid); width: 16px;
+        text-align: center; flex-shrink: 0; }
+    .detail-val { font-weight: 500; color: var(--text-main); margin-left: auto;
+        text-align: right; max-width: 60%; word-break: break-all; }
+
+    /* Card footer actions */
+    .owner-card-foot {
+        padding: .9rem 1.4rem;
+        background: rgba(168,230,61,.04);
+        border-top: 1.5px solid var(--border);
+        display: flex; gap: 10px;
+    }
+
+    .btn-approve {
+        flex: 1; padding: 8px 0;
+        background: linear-gradient(135deg, #1a7a3c, #27ae60);
+        color: #fff; border: none; border-radius: 10px;
+        font-family: 'Syne',sans-serif; font-weight: 700;
+        font-size: .83rem; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; gap: 6px;
+        transition: transform .2s, box-shadow .2s;
+        box-shadow: 0 3px 12px rgba(39,174,96,.25);
+    }
+    .btn-approve:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(39,174,96,.35);
+    }
+    .btn-approve:active { transform: translateY(0); }
+
+    .btn-reject {
+        flex: 1; padding: 8px 0;
+        background: rgba(192,57,43,.07);
+        color: var(--danger); border: 1.5px solid rgba(192,57,43,.25);
+        border-radius: 10px;
+        font-family: 'Syne',sans-serif; font-weight: 700;
+        font-size: .83rem; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; gap: 6px;
+        transition: background .2s, transform .2s, box-shadow .2s;
+    }
+    .btn-reject:hover {
+        background: rgba(192,57,43,.13);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 14px rgba(192,57,43,.18);
+    }
+    .btn-reject:active { transform: translateY(0); }
+
+    /* CONFIRM MODAL */
+    .modal-backdrop-custom {
+        display: none; position: fixed; inset: 0;
+        background: rgba(13,59,46,.45); z-index: 1050;
+        align-items: center; justify-content: center;
+        backdrop-filter: blur(2px);
+    }
+    .modal-backdrop-custom.show { display: flex; }
+    .modal-box {
+        background: var(--surface); border-radius: 20px;
+        padding: 2rem; max-width: 380px; width: 90%;
+        border: 1.5px solid var(--border);
+        box-shadow: 0 20px 60px rgba(13,59,46,.2);
+        animation: popIn .35s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    @@keyframes popIn {
+        from { opacity: 0; transform: scale(.88); }
+        to   { opacity: 1; transform: scale(1); }
+    }
+    .modal-icon-wrap {
+        width: 58px; height: 58px; border-radius: 16px;
+        background: rgba(192,57,43,.1);
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 1rem;
+    }
+    .modal-icon-wrap i { font-size: 1.5rem; color: var(--danger); }
+    .modal-title-txt { font-family: 'Syne',sans-serif; font-weight: 800;
+        font-size: 1.1rem; color: var(--primary); text-align: center; margin-bottom: 6px; }
+    .modal-body-txt  { font-size: .85rem; color: var(--text-faint);
+        text-align: center; margin-bottom: 1.4rem; }
+    .modal-business-name {
+        font-weight: 700; color: var(--primary);
+        background: rgba(13,59,46,.06); padding: 2px 8px;
+        border-radius: 6px;
+    }
+    .modal-actions { display: flex; gap: 10px; }
+    .modal-cancel {
+        flex: 1; padding: 9px; border-radius: 10px;
+        background: var(--bg); border: 1.5px solid var(--border);
+        font-family: 'Syne',sans-serif; font-weight: 700;
+        font-size: .85rem; cursor: pointer; color: var(--text-muted);
+        transition: background .2s;
+    }
+    .modal-cancel:hover { background: var(--border); }
+    .modal-confirm {
+        flex: 1; padding: 9px; border-radius: 10px;
+        background: var(--danger); border: none; color: #fff;
+        font-family: 'Syne',sans-serif; font-weight: 700;
+        font-size: .85rem; cursor: pointer;
+        box-shadow: 0 3px 12px rgba(192,57,43,.3);
+        transition: transform .2s, box-shadow .2s;
+    }
+    .modal-confirm:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(192,57,43,.38); }
+</style>
+
+<!-- Reject confirm modal -->
+<div class="modal-backdrop-custom" id="rejectModal">
+    <div class="modal-box">
+        <div class="modal-icon-wrap">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+        </div>
+        <div class="modal-title-txt">Reject Owner?</div>
+        <div class="modal-body-txt">
+            You are about to permanently reject and remove
+            <span class="modal-business-name" id="modalBusinessName">this owner</span>.
+            This action cannot be undone.
+        </div>
+        <div class="modal-actions">
+            <button class="modal-cancel" id="modalCancel">Cancel</button>
+            <button class="modal-confirm" id="modalConfirm">
+                <i class="bi bi-x-circle-fill me-1"></i> Yes, Reject
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Page -->
+<div>
+
+    <!-- Header -->
+    <div class="po-header">
+        <div class="po-title-group">
+            <div class="po-title-icon">
+                <i class="bi bi-person-check-fill"></i>
+            </div>
+            <div>
+                <h1 class="po-title">Pending Approvals</h1>
+                <p class="po-title-sub">Review and verify court owner applications</p>
+            </div>
+        </div>
+        @if (Model.Any())
+        {
+            <div class="po-count-badge">
+                <span class="po-count-dot"></span>
+                @Model.Count() awaiting review
+            </div>
+        }
+    </div>
+
+    @if (!Model.Any())
+    {
+        <!-- Empty State -->
+        <div class="empty-state">
+            <div class="empty-icon-wrap">
+                <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <div class="empty-title">All Caught Up!</div>
+            <p class="empty-sub">There are no pending owner applications right now.<br>Check back later or head back to the dashboard.</p>
+            <a asp-controller="Admin" asp-action="Dashboard" class="btn btn-accent mt-3">
+                <i class="bi bi-speedometer2 me-1"></i> Back to Dashboard
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="owner-grid">
+            @foreach (var owner in Model)
+            {
+                <div class="owner-card">
+
+                    <!-- Head -->
+                    <div class="owner-card-head">
+                        <div class="owner-avatar">
+                            @(owner.BusinessName?.Length > 0 ? owner.BusinessName[0].ToString().ToUpper() : "?")
+                        </div>
+                        <div>
+                            <div class="owner-business">@owner.BusinessName</div>
+                            <div class="owner-reg-date">
+                                <i class="bi bi-calendar3 me-1"></i>
+                                Registered @owner.RegisterDate.ToString("dd MMM yyyy")
+                            </div>
+                        </div>
+                        <span class="pending-pill">Pending</span>
+                    </div>
+
+                    <!-- Body -->
+                    <div class="owner-card-body">
+                        <div class="detail-row">
+                            <i class="bi bi-envelope-fill"></i>
+                            <span>Email</span>
+                            <span class="detail-val">@owner.Email</span>
+                        </div>
+                        <div class="detail-row">
+                            <i class="bi bi-phone-fill"></i>
+                            <span>Phone</span>
+                            <span class="detail-val">@owner.Phone</span>
+                        </div>
+                        <div class="detail-row">
+                            <i class="bi bi-geo-alt-fill"></i>
+                            <span>City</span>
+                            <span class="detail-val">@owner.City</span>
+                        </div>
+                        <div class="detail-row">
+                            <i class="bi bi-credit-card-2-front-fill"></i>
+                            <span>CNIC</span>
+                            <span class="detail-val">@owner.NationalID</span>
+                        </div>
+                    </div>
+
+                    <!-- Footer Actions -->
+                    <div class="owner-card-foot">
+                        <form asp-action="ApproveOwner" asp-route-id="@owner.OwnerId" method="post" class="flex-fill d-contents">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn-approve">
+                                <i class="bi bi-check-circle-fill"></i> Approve
+                            </button>
+                        </form>
+                        <button type="button" class="btn-reject"
+                                data-id="@owner.OwnerId"
+                                data-name="@owner.BusinessName"
+                                onclick="openRejectModal(this)">
+                            <i class="bi bi-x-circle-fill"></i> Reject
+                        </button>
+                        <!-- hidden reject form -->
+                        <form asp-action="RejectOwner" asp-route-id="@owner.OwnerId"
+                              method="post" id="rejectForm-@owner.OwnerId" class="d-none">
+                            @Html.AntiForgeryToken()
+                        </form>
+                    </div>
+
+                </div>
+            }
+        </div>
+    }
+
+</div>
+
+@section Scripts {
+<script>
+    var pendingFormId = null;
+
+    function openRejectModal(btn) {
+        pendingFormId = 'rejectForm-' + btn.dataset.id;
+        document.getElementById('modalBusinessName').textContent = btn.dataset.name || 'this owner';
+        document.getElementById('rejectModal').classList.add('show');
+    }
+
+    document.getElementById('modalCancel').addEventListener('click', function () {
+        document.getElementById('rejectModal').classList.remove('show');
+        pendingFormId = null;
+    });
+
+    document.getElementById('modalConfirm').addEventListener('click', function () {
+        if (pendingFormId) {
+            document.getElementById(pendingFormId).submit();
+        }
+    });
+
+    // Close on backdrop click
+    document.getElementById('rejectModal').addEventListener('click', function (e) {
+        if (e.target === this) {
+            this.classList.remove('show');
+            pendingFormId = null;
+        }
+    });
+</script>
+}

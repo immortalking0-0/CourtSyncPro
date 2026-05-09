@@ -1,0 +1,319 @@
+﻿@model CourtSyncPro.Models.Entities.Booking
+@{
+    ViewData["Title"] = "Delete Booking";
+}
+
+<style>
+    @@keyframes popIn {
+        0%   { opacity: 0; transform: scale(.88) translateY(24px); }
+        70%  { transform: scale(1.02) translateY(-3px); }
+        100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @@keyframes shakeWarn {
+        0%,100% { transform: translateX(0); }
+        20%     { transform: translateX(-6px); }
+        40%     { transform: translateX(6px); }
+        60%     { transform: translateX(-4px); }
+        80%     { transform: translateX(4px); }
+    }
+    @@keyframes pulseRed {
+        0%,100% { box-shadow: 0 0 0 0 rgba(192,57,43,.4); }
+        50%     { box-shadow: 0 0 0 12px rgba(192,57,43,0); }
+    }
+    @@keyframes fadeUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @@keyframes countDown {
+        from { stroke-dashoffset: 0; }
+        to   { stroke-dashoffset: 113; }
+    }
+
+    /* LAYOUT */
+    .del-wrap {
+        min-height: calc(100vh - 130px);
+        display: flex; align-items: center; justify-content: center;
+        padding: 2rem 1rem; position: relative; overflow: hidden;
+    }
+
+    /* blobs */
+    .del-blob {
+        position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+    }
+    .del-blob-1 {
+        width: 300px; height: 300px; top: -80px; right: -80px;
+        background: radial-gradient(circle, rgba(192,57,43,.08) 0%, transparent 70%);
+    }
+    .del-blob-2 {
+        width: 200px; height: 200px; bottom: 60px; left: -60px;
+        background: radial-gradient(circle, rgba(192,57,43,.05) 0%, transparent 70%);
+    }
+
+    /* CARD */
+    .del-card {
+        background: var(--surface);
+        border: 1.5px solid rgba(192,57,43,.2);
+        border-radius: 22px;
+        box-shadow: 0 12px 48px rgba(192,57,43,.1), 0 2px 8px rgba(13,59,46,.05);
+        width: 100%; max-width: 460px;
+        position: relative; z-index: 1;
+        overflow: hidden;
+        animation: popIn .55s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    .del-card::before {
+        content: '';
+        position: absolute; top: 0; left: 0; right: 0; height: 4px;
+        background: linear-gradient(90deg, #c0392b, #e74c3c, #c0392b);
+        border-radius: 22px 22px 0 0;
+    }
+
+    /* DANGER ICON */
+    .del-icon-section {
+        padding: 2.2rem 2rem 1.4rem;
+        display: flex; flex-direction: column; align-items: center;
+        border-bottom: 1.5px solid var(--border);
+    }
+    .del-icon-ring {
+        width: 88px; height: 88px; position: relative;
+        margin-bottom: 1.2rem;
+        animation: shakeWarn .6s ease .4s both;
+    }
+    .del-icon-ring svg {
+        position: absolute; top: 0; left: 0;
+        width: 88px; height: 88px; transform: rotate(-90deg);
+    }
+    .del-icon-ring svg circle {
+        fill: none; stroke: rgba(192,57,43,.2);
+        stroke-width: 3; r: 40; cx: 44; cy: 44;
+    }
+    .del-icon-ring svg .progress-ring {
+        stroke: #e74c3c; stroke-dasharray: 251;
+        stroke-dashoffset: 251; stroke-linecap: round;
+    }
+    .del-icon-inner {
+        position: absolute; inset: 8px;
+        background: rgba(192,57,43,.1); border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        animation: pulseRed 2.4s ease-in-out 1s 3;
+    }
+    .del-icon-inner i { font-size: 2rem; color: var(--danger); }
+
+    .del-title {
+        font-family: 'Syne', sans-serif; font-weight: 800;
+        font-size: 1.4rem; letter-spacing: -.03em;
+        color: var(--primary); margin: 0 0 5px;
+    }
+    .del-subtitle { font-size: .85rem; color: var(--text-faint); margin: 0; }
+
+    /* BOOKING DETAILS STRIP */
+    .del-details {
+        margin: 0; padding: 1.3rem 2rem;
+        border-bottom: 1.5px solid var(--border);
+        display: flex; flex-direction: column; gap: 8px;
+        animation: fadeUp .4s ease .15s both;
+    }
+    .del-detail-row {
+        display: flex; align-items: center; gap: 10px;
+        font-size: .84rem;
+    }
+    .del-detail-icon {
+        width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+        background: rgba(192,57,43,.07);
+        display: flex; align-items: center; justify-content: center;
+    }
+    .del-detail-icon i { font-size: .85rem; color: var(--danger); }
+    .del-detail-label { color: var(--text-faint); min-width: 80px; }
+    .del-detail-val   { font-weight: 600; color: var(--primary); margin-left: auto; }
+
+    /* BOOKING ID BADGE */
+    .booking-id-badge {
+        display: inline-flex; align-items: center; gap: 7px;
+        background: rgba(192,57,43,.07); border: 1.5px solid rgba(192,57,43,.2);
+        border-radius: 10px; padding: 6px 14px; margin-bottom: 1rem;
+        font-family: 'Syne', sans-serif; font-weight: 700;
+        font-size: .9rem; color: var(--danger);
+    }
+    .booking-id-badge i { font-size: .85rem; }
+
+    /* WARNING BOX */
+    .del-warning {
+        margin: 0 2rem; padding: .85rem 1.1rem;
+        background: rgba(192,57,43,.06);
+        border: 1.5px solid rgba(192,57,43,.18);
+        border-radius: 12px;
+        display: flex; align-items: flex-start; gap: 10px;
+        font-size: .8rem; color: #7a1c14;
+        animation: fadeUp .4s ease .25s both;
+    }
+    .del-warning i { font-size: 1rem; color: var(--danger); flex-shrink: 0; margin-top: 1px; }
+
+    /* ACTIONS */
+    .del-actions {
+        padding: 1.4rem 2rem 1.8rem;
+        display: flex; flex-direction: column; gap: 10px;
+        animation: fadeUp .4s ease .3s both;
+    }
+    .btn-delete-confirm {
+        width: 100%; padding: 12px;
+        background: var(--danger); color: #fff;
+        border: none; border-radius: 11px;
+        font-family: 'Syne', sans-serif; font-weight: 700; font-size: .95rem;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        cursor: pointer;
+        transition: transform .2s, box-shadow .2s, background .2s;
+        box-shadow: 0 4px 18px rgba(192,57,43,.3);
+        position: relative; overflow: hidden;
+    }
+    .btn-delete-confirm::after {
+        content: ''; position: absolute; inset: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,.1), transparent);
+        transform: translateX(-100%); transition: transform .5s;
+    }
+    .btn-delete-confirm:hover::after { transform: translateX(100%); }
+    .btn-delete-confirm:hover {
+        background: #a93226;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 28px rgba(192,57,43,.38);
+    }
+    .btn-delete-confirm:active { transform: translateY(0); }
+    .btn-delete-confirm:disabled {
+        opacity: .6; cursor: not-allowed; transform: none;
+    }
+
+    .btn-cancel-del {
+        width: 100%; padding: 11px;
+        background: var(--bg); border: 1.5px solid var(--border);
+        border-radius: 11px;
+        font-family: 'Syne', sans-serif; font-weight: 700; font-size: .9rem;
+        color: var(--text-muted); cursor: pointer;
+        display: flex; align-items: center; justify-content: center; gap: 7px;
+        text-decoration: none;
+        transition: background .2s, border-color .2s, color .2s, transform .2s;
+    }
+    .btn-cancel-del:hover {
+        background: var(--border); color: var(--text-main);
+        border-color: var(--text-faint); transform: translateY(-1px);
+    }
+
+    /* COUNTDOWN TIMER on button */
+    .countdown-text { font-size: .78rem; opacity: .8; }
+</style>
+
+<div class="del-wrap">
+    <div class="del-blob del-blob-1"></div>
+    <div class="del-blob del-blob-2"></div>
+
+    <div class="del-card">
+
+        <!-- Icon Section -->
+        <div class="del-icon-section">
+            <div class="del-icon-ring">
+                <svg viewBox="0 0 88 88">
+                    <circle></circle>
+                    <circle class="progress-ring" id="progressRing"></circle>
+                </svg>
+                <div class="del-icon-inner">
+                    <i class="bi bi-trash3-fill"></i>
+                </div>
+            </div>
+
+            <div class="booking-id-badge">
+                <i class="bi bi-hash"></i> Booking @Model.BookingId
+            </div>
+
+            <h2 class="del-title">Delete This Booking?</h2>
+            <p class="del-subtitle">Review the details below before confirming</p>
+        </div>
+
+        <!-- Booking Details -->
+        <div class="del-details">
+            @if (Model.User != null)
+            {
+                <div class="del-detail-row">
+                    <div class="del-detail-icon"><i class="bi bi-person-fill"></i></div>
+                    <span class="del-detail-label">Player</span>
+                    <span class="del-detail-val">@Model.User.Name</span>
+                </div>
+            }
+            @if (Model.Court != null)
+            {
+                <div class="del-detail-row">
+                    <div class="del-detail-icon"><i class="bi bi-geo-alt-fill"></i></div>
+                    <span class="del-detail-label">Court</span>
+                    <span class="del-detail-val">@Model.Court.CourtName</span>
+                </div>
+            }
+            <div class="del-detail-row">
+                <div class="del-detail-icon"><i class="bi bi-currency-rupee"></i></div>
+                <span class="del-detail-label">Amount</span>
+                <span class="del-detail-val">Rs. @Model.TotalAmount</span>
+            </div>
+        </div>
+
+        <!-- Warning -->
+        <div class="del-warning mx-0 mt-3" style="margin: 0 2rem;">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span>This action is <strong>permanent</strong> and cannot be undone.
+            The booking record will be removed immediately.</span>
+        </div>
+
+        <!-- Actions -->
+        <div class="del-actions">
+            <form asp-action="Delete" method="post" id="deleteForm">
+                <input type="hidden" asp-for="BookingId" />
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn-delete-confirm" id="deleteBtn" disabled>
+                    <i class="bi bi-trash3-fill"></i>
+                    <span id="btnLabel">Wait</span>
+                    <span class="countdown-text" id="countdownText">(<span id="counter">5</span>s)</span>
+                </button>
+            </form>
+            <a asp-action="Index" class="btn-cancel-del">
+                <i class="bi bi-arrow-left-circle"></i> Keep Booking
+            </a>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Countdown to enable delete button
+    (function () {
+        var btn      = document.getElementById('deleteBtn');
+        var label    = document.getElementById('btnLabel');
+        var ctText   = document.getElementById('countdownText');
+        var counter  = document.getElementById('counter');
+        var ring     = document.getElementById('progressRing');
+        var seconds  = 5;
+        var circumference = 2 * Math.PI * 40;   // r=40 → ~251
+
+        ring.style.strokeDasharray  = circumference;
+        ring.style.strokeDashoffset = circumference;
+
+        var interval = setInterval(function () {
+            seconds--;
+            counter.textContent = seconds;
+
+            // shrink ring
+            var progress = (5 - seconds) / 5;
+            ring.style.transition = 'stroke-dashoffset .9s linear';
+            ring.style.strokeDashoffset = circumference * (1 - progress);
+
+            if (seconds <= 0) {
+                clearInterval(interval);
+                btn.disabled = false;
+                label.textContent = 'Yes, Delete Permanently';
+                ctText.style.display = 'none';
+                btn.style.animation = 'pulseRed .6s ease both';
+            }
+        }, 1000);
+
+        // kick off ring immediately
+        setTimeout(function () {
+            ring.style.transition = 'stroke-dashoffset .9s linear';
+            ring.style.strokeDashoffset = circumference * .8;
+        }, 50);
+    })();
+</script>
+}

@@ -1,0 +1,86 @@
+﻿@model CourtSyncPro.Models.Entities.Court
+@{
+    ViewData["Title"] = "Add New Court";
+}
+
+<div class="row justify-content-center mt-4">
+    <div class="col-md-7">
+        <div class="card p-4">
+            <div class="text-center mb-4">
+                <span style="font-size:2.5rem;">🏟</span>
+                <h4 class="fw-bold mt-2" style="color:var(--primary);">Register New Court</h4>
+                <p class="text-muted small">Fill in your court details below</p>
+            </div>
+
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="All" class="alert alert-danger py-2 small"></div>
+
+                <div class="mb-3">
+                    <label asp-for="CourtName" class="form-label fw-semibold">Court Name</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-building"></i></span>
+                        <input asp-for="CourtName" class="form-control" placeholder="e.g. Champions Futsal Arena" />
+                    </div>
+                    <span asp-validation-for="CourtName" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="SportType" class="form-label fw-semibold">Sport Type</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-trophy"></i></span>
+                        <select asp-for="SportType" class="form-select"
+                                asp-items="Html.GetEnumSelectList<CourtSyncPro.Models.Entities.SportType>()">
+                            <option value="">-- Select Sport --</option>
+                        </select>
+                    </div>
+                    <span asp-validation-for="SportType" class="text-danger small"></span>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="City" class="form-label fw-semibold">City</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+                            <input asp-for="City" class="form-control" placeholder="e.g. Lahore" />
+                        </div>
+                        <span asp-validation-for="City" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="PricePerHour" class="form-label fw-semibold">Price Per Hour (Rs.)</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-currency-dollar"></i></span>
+                            <input asp-for="PricePerHour" class="form-control" placeholder="e.g. 2500" />
+                        </div>
+                        <span asp-validation-for="PricePerHour" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="Address" class="form-label fw-semibold">Full Address</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-map"></i></span>
+                        <textarea asp-for="Address" class="form-control" rows="2"
+                                  placeholder="e.g. Plot 5, Main Boulevard, DHA Phase 6"></textarea>
+                    </div>
+                    <span asp-validation-for="Address" class="text-danger small"></span>
+                </div>
+
+                <button type="submit" class="btn btn-accent w-100 py-2 fw-semibold">
+                    <i class="bi bi-plus-circle me-1"></i> Register Court
+                </button>
+
+                <a asp-action="Dashboard" class="btn btn-outline-secondary w-100 mt-2">
+                    <i class="bi bi-arrow-left me-1"></i> Back to My Courts
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

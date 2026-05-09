@@ -1,0 +1,316 @@
+﻿@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<style>
+    @@keyframes countUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @@keyframes pulseRing {
+        0%   { box-shadow: 0 0 0 0 rgba(243,156,18,.35); }
+        70%  { box-shadow: 0 0 0 10px rgba(243,156,18,0); }
+        100% { box-shadow: 0 0 0 0 rgba(243,156,18,0); }
+    }
+    @@keyframes barGrow {
+        from { width: 0%; }
+    }
+    @@keyframes slideRight {
+        from { opacity: 0; transform: translateX(-16px); }
+        to   { opacity: 1; transform: translateX(0); }
+    }
+
+    .dash-wrap { animation: fadeUp .4s ease both; }
+
+    /* PAGE HEADER */
+    .dash-header {
+        display: flex; align-items: center; justify-content: space-between;
+        flex-wrap: wrap; gap: 12px;
+        margin-bottom: 2rem;
+    }
+    .dash-title-group { display: flex; align-items: center; gap: 14px; }
+    .dash-title-icon {
+        width: 48px; height: 48px;
+        background: var(--primary);
+        border-radius: 14px;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+        box-shadow: 0 4px 16px rgba(13,59,46,.2);
+    }
+    .dash-title-icon i { font-size: 1.3rem; color: var(--accent); }
+    .dash-title { font-family: 'Syne',sans-serif; font-weight: 800; font-size: 1.5rem; letter-spacing: -.03em; color: var(--primary); margin: 0; }
+    .dash-title-sub { font-size: .8rem; color: var(--text-faint); margin: 0; }
+
+    .dash-live-badge {
+        display: inline-flex; align-items: center; gap: 7px;
+        background: rgba(13,59,46,.06); border: 1.5px solid var(--border);
+        border-radius: 20px; padding: 5px 14px;
+        font-size: .78rem; font-weight: 600; color: var(--text-muted);
+    }
+    .dash-live-dot {
+        width: 8px; height: 8px; background: #27ae60;
+        border-radius: 50%; animation: pulse-dot 2s infinite;
+    }
+
+    /* STAT CARDS */
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 2rem; }
+
+    .stat-card {
+        background: var(--surface);
+        border: 1.5px solid var(--border);
+        border-radius: 18px;
+        padding: 1.4rem 1.5rem;
+        position: relative; overflow: hidden;
+        transition: transform .22s, box-shadow .22s;
+        animation: fadeUp .45s ease both;
+    }
+    .stat-card:hover { transform: translateY(-4px); box-shadow: 0 10px 32px rgba(13,59,46,.1); }
+    .stat-card::before {
+        content: ''; position: absolute;
+        top: 0; left: 0; right: 0; height: 3px;
+        border-radius: 18px 18px 0 0;
+    }
+    .stat-card.c-green::before  { background: #27ae60; }
+    .stat-card.c-blue::before   { background: #2980b9; }
+    .stat-card.c-accent::before { background: var(--accent); }
+    .stat-card.c-warn::before   { background: #f39c12; }
+
+    .stat-card:nth-child(1) { animation-delay: .06s; }
+    .stat-card:nth-child(2) { animation-delay: .12s; }
+    .stat-card:nth-child(3) { animation-delay: .18s; }
+    .stat-card:nth-child(4) { animation-delay: .24s; }
+
+    .stat-icon-wrap {
+        width: 44px; height: 44px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        margin-bottom: 1rem; flex-shrink: 0;
+    }
+    .stat-icon-wrap i { font-size: 1.2rem; }
+    .ic-green  { background: rgba(39,174,96,.12);  color: #1a7a3c; }
+    .ic-blue   { background: rgba(41,128,185,.12); color: #1a5e9a; }
+    .ic-accent { background: rgba(168,230,61,.15); color: var(--accent-dark); }
+    .ic-warn   { background: rgba(243,156,18,.12); color: #b57a00; }
+
+    .stat-number {
+        font-family: 'Syne', sans-serif; font-weight: 800;
+        font-size: 2.1rem; line-height: 1; letter-spacing: -.04em;
+        color: var(--primary);
+        animation: countUp .5s ease both;
+    }
+    .stat-label { font-size: .8rem; color: var(--text-faint); font-weight: 500; margin-top: 4px; }
+
+    /* progress bar inside card */
+    .stat-bar-wrap {
+        margin-top: 12px; background: var(--border);
+        border-radius: 4px; height: 4px; overflow: hidden;
+    }
+    .stat-bar {
+        height: 100%; border-radius: 4px;
+        animation: barGrow .9s cubic-bezier(.4,0,.2,1) both;
+        animation-delay: .4s;
+    }
+    .bar-green  { background: #27ae60; }
+    .bar-blue   { background: #2980b9; }
+    .bar-accent { background: var(--accent); }
+    .bar-warn   { background: #f39c12; }
+
+    /* PENDING CARD PULSE */
+    .stat-card.c-warn { animation: pulseRing 2.8s ease-in-out 1s 3; }
+
+    /* QUICK ACTIONS */
+    .section-label {
+        font-family: 'Syne', sans-serif; font-size: .72rem; font-weight: 700;
+        letter-spacing: .1em; text-transform: uppercase;
+        color: var(--text-faint); margin-bottom: 12px;
+    }
+
+    .action-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 2rem; }
+
+    .action-card {
+        background: var(--surface);
+        border: 1.5px solid var(--border);
+        border-radius: 14px; padding: 1rem 1.2rem;
+        display: flex; align-items: center; gap: 12px;
+        text-decoration: none; color: var(--text-main);
+        transition: border-color .2s, transform .2s, box-shadow .2s;
+        animation: slideRight .4s ease both;
+    }
+    .action-card:hover {
+        border-color: var(--accent);
+        transform: translateX(3px);
+        box-shadow: 0 4px 18px rgba(168,230,61,.15);
+        color: var(--text-main);
+    }
+    .action-card:nth-child(1) { animation-delay: .15s; }
+    .action-card:nth-child(2) { animation-delay: .22s; }
+    .action-card:nth-child(3) { animation-delay: .29s; }
+    .action-card:nth-child(4) { animation-delay: .36s; }
+
+    .action-icon {
+        width: 38px; height: 38px; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
+    .action-icon i { font-size: 1rem; }
+    .action-text { font-size: .85rem; font-weight: 600; color: var(--primary); line-height: 1.2; }
+    .action-sub  { font-size: .73rem; color: var(--text-faint); }
+
+    /* SYSTEM STATUS */
+    .status-strip {
+        background: var(--surface);
+        border: 1.5px solid var(--border);
+        border-radius: 14px; padding: 1rem 1.5rem;
+        display: flex; flex-wrap: wrap; gap: 16px; align-items: center;
+        animation: fadeUp .5s ease .3s both;
+    }
+    .status-item { display: flex; align-items: center; gap: 7px; font-size: .8rem; color: var(--text-muted); }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .s-ok   { background: #27ae60; }
+    .s-warn { background: #f39c12; animation: pulse-dot 1.8s infinite; }
+</style>
+
+<div class="dash-wrap">
+
+    <!-- Header -->
+    <div class="dash-header">
+        <div class="dash-title-group">
+            <div class="dash-title-icon">
+                <i class="bi bi-speedometer2"></i>
+            </div>
+            <div>
+                <h1 class="dash-title">Admin Dashboard</h1>
+                <p class="dash-title-sub">Platform overview &amp; controls</p>
+            </div>
+        </div>
+        <div class="dash-live-badge">
+            <span class="dash-live-dot"></span>
+            Live Data
+        </div>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="stat-grid">
+
+        <!-- Players -->
+        <div class="stat-card c-green">
+            <div class="stat-icon-wrap ic-green">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <div class="stat-number">@ViewBag.TotalUsers</div>
+            <div class="stat-label">Total Players</div>
+            <div class="stat-bar-wrap">
+                <div class="stat-bar bar-green" style="width:72%"></div>
+            </div>
+        </div>
+
+        <!-- Owners -->
+        <div class="stat-card c-blue">
+            <div class="stat-icon-wrap ic-blue">
+                <i class="bi bi-building-fill"></i>
+            </div>
+            <div class="stat-number">@ViewBag.TotalOwners</div>
+            <div class="stat-label">Court Owners</div>
+            <div class="stat-bar-wrap">
+                <div class="stat-bar bar-blue" style="width:54%"></div>
+            </div>
+        </div>
+
+        <!-- Courts -->
+        <div class="stat-card c-accent">
+            <div class="stat-icon-wrap ic-accent">
+                <i class="bi bi-trophy-fill"></i>
+            </div>
+            <div class="stat-number">@ViewBag.TotalCourts</div>
+            <div class="stat-label">Active Courts</div>
+            <div class="stat-bar-wrap">
+                <div class="stat-bar bar-accent" style="width:85%"></div>
+            </div>
+        </div>
+
+        <!-- Pending (attention card) -->
+        <div class="stat-card c-warn">
+            <div class="stat-icon-wrap ic-warn">
+                <i class="bi bi-hourglass-split"></i>
+            </div>
+            <div class="stat-number" style="color:#b57a00;">@ViewBag.PendingOwners</div>
+            <div class="stat-label">Awaiting Approval</div>
+            <div class="stat-bar-wrap">
+                <div class="stat-bar bar-warn" style="width:38%"></div>
+            </div>
+            <a asp-action="PendingOwners"
+               class="btn btn-accent btn-sm w-100 mt-3"
+               style="font-size:.78rem; padding:6px;">
+                <i class="bi bi-person-check-fill me-1"></i> Review Pending
+            </a>
+        </div>
+
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="section-label">Quick Actions</div>
+    <div class="action-grid">
+
+        <a asp-action="PendingOwners" class="action-card">
+            <div class="action-icon ic-warn">
+                <i class="bi bi-person-check-fill"></i>
+            </div>
+            <div>
+                <div class="action-text">Verify Owners</div>
+                <div class="action-sub">Review applications</div>
+            </div>
+        </a>
+
+        <a asp-controller="Courts" asp-action="Index" class="action-card">
+            <div class="action-icon ic-accent">
+                <i class="bi bi-geo-alt-fill"></i>
+            </div>
+            <div>
+                <div class="action-text">All Courts</div>
+                <div class="action-sub">Browse listings</div>
+            </div>
+        </a>
+
+        <a asp-controller="Bookings" asp-action="Index" class="action-card">
+            <div class="action-icon ic-blue">
+                <i class="bi bi-calendar-check-fill"></i>
+            </div>
+            <div>
+                <div class="action-text">All Bookings</div>
+                <div class="action-sub">Manage reservations</div>
+            </div>
+        </a>
+
+        <a asp-controller="Home" asp-action="Index" class="action-card">
+            <div class="action-icon ic-green">
+                <i class="bi bi-house-fill"></i>
+            </div>
+            <div>
+                <div class="action-text">Home Page</div>
+                <div class="action-sub">Public view</div>
+            </div>
+        </a>
+
+    </div>
+
+    <!-- System Status Strip -->
+    <div class="section-label">System Status</div>
+    <div class="status-strip">
+        <div class="status-item">
+            <span class="status-dot s-ok"></span> Database — Online
+        </div>
+        <div class="status-item">
+            <span class="status-dot s-ok"></span> Booking Engine — Running
+        </div>
+        <div class="status-item">
+            <span class="status-dot s-ok"></span> Auth Service — Active
+        </div>
+        @if ((int)(ViewBag.PendingOwners ?? 0) > 0)
+        {
+            <div class="status-item ms-auto">
+                <span class="status-dot s-warn"></span>
+                <strong style="color:#b57a00;">@ViewBag.PendingOwners owner(s) need review</strong>
+            </div>
+        }
+    </div>
+
+</div>

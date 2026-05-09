@@ -1,0 +1,492 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - CourtSync Pro</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+
+    <style>
+        :root {
+            --primary:      #0d3b2e;
+            --primary-mid:  #1a5c42;
+            --accent:       #a8e63d;
+            --accent-hover: #bfef5a;
+            --accent-dark:  #5a8a00;
+            --bg:           #f4f7f0;
+            --surface:      #ffffff;
+            --border:       #e4edd8;
+            --text-main:    #0d3b2e;
+            --text-muted:   #4a6b5a;
+            --text-faint:   #6b8a78;
+            --danger:       #c0392b;
+            --info:         #1a6ea8;
+            --success:      #1a7a3c;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; }
+        body {
+            background: var(--bg);
+            font-family: 'DM Sans', sans-serif;
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        h1,h2,h3,h4,h5,h6,.display-1,.display-2,.display-3,.navbar-brand {
+            font-family: 'Syne', sans-serif;
+        }
+
+        @@keyframes fadeUp {
+            from { opacity: 0; transform: translateY(18px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @@keyframes slideDown {
+            from { opacity: 0; transform: translateY(-8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @@keyframes pulse-dot {
+            0%,100% { opacity:1; transform:scale(1); }
+            50%      { opacity:.45; transform:scale(.65); }
+        }
+
+        main { animation: fadeUp 0.45s ease both; flex: 1; }
+
+        /* NAVBAR */
+        .navbar {
+            background: var(--primary) !important;
+            padding-top: 0; padding-bottom: 0;
+            min-height: 62px;
+            animation: slideDown 0.4s ease both;
+            position: relative; overflow: hidden;
+        }
+        .navbar::before {
+            content:''; position:absolute; top:-40px; right:-20px;
+            width:140px; height:140px; border-radius:50%;
+            background:rgba(168,230,61,.06); pointer-events:none;
+        }
+        .navbar::after {
+            content:''; position:absolute; bottom:-30px; left:25%;
+            width:90px; height:90px; border-radius:50%;
+            background:rgba(168,230,61,.04); pointer-events:none;
+        }
+        .navbar-brand {
+            color: var(--accent) !important;
+            font-weight: 800; font-size: 1.25rem; letter-spacing:-.02em;
+            display:flex; align-items:center; gap:10px; transition:opacity .2s;
+        }
+        .navbar-brand:hover { opacity:.85; }
+        .brand-icon {
+            width:34px; height:34px; background:var(--accent);
+            border-radius:9px; display:flex; align-items:center;
+            justify-content:center; flex-shrink:0; transition:transform .25s;
+        }
+        .navbar-brand:hover .brand-icon { transform:rotate(-8deg) scale(1.05); }
+        .brand-icon i { color:var(--primary); font-size:1rem; }
+
+        .nav-link {
+            color:rgba(255,255,255,.75) !important;
+            font-size:.875rem; font-weight:500;
+            padding:8px 12px !important; border-radius:8px;
+            transition:color .2s, background .2s;
+            display:flex; align-items:center; gap:5px;
+        }
+        .nav-link:hover { color:#fff !important; background:rgba(255,255,255,.08); }
+        .nav-link i { font-size:.9rem; opacity:.8; }
+        .nav-divider {
+            width:1px; height:22px; background:rgba(255,255,255,.12);
+            margin:0 6px; align-self:center;
+        }
+        .navbar-toggler {
+            border:1px solid rgba(255,255,255,.25) !important;
+            border-radius:8px !important; padding:5px 9px !important;
+        }
+        .navbar-toggler-icon {
+            background-image:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255,255,255,0.85%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+        }
+
+        /* BUTTONS */
+        .btn-accent {
+            background:var(--accent); color:var(--primary); border:none;
+            font-family:'Syne',sans-serif; font-weight:700; font-size:.85rem;
+            border-radius:8px; padding:7px 18px;
+            transition:background .2s, transform .2s, box-shadow .2s;
+            display:inline-flex; align-items:center; gap:6px;
+        }
+        .btn-accent:hover {
+            background:var(--accent-hover); color:var(--primary);
+            transform:translateY(-1px); box-shadow:0 4px 16px rgba(168,230,61,.35);
+        }
+        .btn-accent:active { transform:translateY(0); }
+
+        /* USER BADGE */
+        .nav-user-badge {
+            background:rgba(168,230,61,.1); border:1px solid rgba(168,230,61,.28);
+            color:#d4f07a !important; border-radius:22px; padding:5px 14px;
+            font-size:.82rem; white-space:nowrap;
+            display:inline-flex; align-items:center; gap:6px;
+        }
+        .nav-user-badge i { font-size:.95rem; }
+        .online-dot {
+            width:7px; height:7px; background:var(--accent);
+            border-radius:50%; flex-shrink:0;
+            animation:pulse-dot 2.2s ease-in-out infinite;
+        }
+        .role-tag {
+            font-size:.62rem; font-weight:700; letter-spacing:.06em;
+            text-transform:uppercase; background:var(--accent);
+            color:var(--primary); border-radius:5px; padding:1px 7px;
+        }
+        .nav-user-badge.admin-badge {
+            background:rgba(192,57,43,.15); border-color:rgba(192,57,43,.35);
+            color:#f5a49c !important;
+        }
+        .nav-user-badge.admin-badge .online-dot { background:#e74c3c; }
+        .role-tag.admin-tag { background:#c0392b; color:#fff; }
+
+        /* CARDS */
+        .card {
+            border:1.5px solid var(--border) !important;
+            border-radius:14px !important;
+            box-shadow:0 2px 12px rgba(13,59,46,.06);
+            background:var(--surface);
+            transition:transform .22s, box-shadow .22s;
+        }
+        .card:hover { transform:translateY(-3px); box-shadow:0 8px 28px rgba(13,59,46,.1); }
+        .card-accent-top { border-top:3px solid var(--accent) !important; }
+
+        /* ALERTS */
+        .alert { border-radius:10px; border:none; font-size:.9rem; animation:fadeUp .3s ease both; }
+        .alert-success { background:#eaf6ee; color:#1a5c2e; border-left:4px solid #27ae60 !important; }
+        .alert-info    { background:#e8f3fc; color:#154e7a; border-left:4px solid #2980b9 !important; }
+        .alert-danger  { background:#fcecea; color:#7a1c14; border-left:4px solid #c0392b !important; }
+        .alert-warning { background:#fef9e7; color:#7a5c10; border-left:4px solid #f39c12 !important; }
+
+        /* FORMS */
+        .form-control,.form-select {
+            border:1.5px solid var(--border); border-radius:9px;
+            padding:9px 14px; font-size:.9rem;
+            transition:border-color .2s, box-shadow .2s;
+            background:var(--surface); color:var(--text-main);
+        }
+        .form-control:focus,.form-select:focus {
+            border-color:var(--accent); box-shadow:0 0 0 3px rgba(168,230,61,.18); outline:none;
+        }
+        .form-label { font-weight:500; font-size:.85rem; color:var(--text-muted); margin-bottom:5px; }
+
+        /* TABLE */
+        .table { border-collapse:separate; border-spacing:0; }
+        .table thead th {
+            background:var(--primary); color:rgba(255,255,255,.85);
+            font-family:'Syne',sans-serif; font-size:.8rem; font-weight:700;
+            letter-spacing:.06em; text-transform:uppercase;
+            border:none; padding:12px 16px;
+        }
+        .table thead th:first-child { border-radius:10px 0 0 0; }
+        .table thead th:last-child  { border-radius:0 10px 0 0; }
+        .table tbody tr { transition:background .15s; }
+        .table tbody tr:hover td { background:rgba(168,230,61,.06); }
+        .table tbody td { border-color:var(--border); padding:12px 16px; font-size:.9rem; vertical-align:middle; }
+
+        /* STATUS BADGES */
+        .badge-available { background:#eaf6ee; color:#1a5c2e; padding:4px 10px; border-radius:20px; font-size:.75rem; font-weight:600; }
+        .badge-booked    { background:#fcecea; color:#7a1c14; padding:4px 10px; border-radius:20px; font-size:.75rem; font-weight:600; }
+        .badge-pending   { background:#fef9e7; color:#7a5c10; padding:4px 10px; border-radius:20px; font-size:.75rem; font-weight:600; }
+
+        /* PAGE HERO */
+        .page-hero {
+            background:var(--primary); color:#fff;
+            padding:2.5rem 0 2rem; margin-bottom:2rem;
+            position:relative; overflow:hidden;
+        }
+        .page-hero::before {
+            content:''; position:absolute; top:-60px; right:-60px;
+            width:220px; height:220px; border-radius:50%;
+            background:rgba(168,230,61,.07); pointer-events:none;
+        }
+        .page-hero h1 { font-weight:800; font-size:1.9rem; letter-spacing:-.03em; margin:0; }
+        .page-hero .subtitle { color:rgba(255,255,255,.6); font-size:.9rem; margin-top:4px; }
+        .page-hero .accent-line { width:40px; height:4px; background:var(--accent); border-radius:2px; margin-top:12px; }
+
+        /* FOOTER */
+        footer { background:var(--primary); color:rgba(255,255,255,.35); font-size:.8rem; letter-spacing:.04em; }
+        footer a { color:var(--accent); text-decoration:none; }
+        footer a:hover { color:var(--accent-hover); }
+
+        /* SCROLL TO TOP */
+        #scrollTopBtn {
+            position:fixed; bottom:28px; right:28px;
+            width:42px; height:42px; background:var(--accent);
+            color:var(--primary); border:none; border-radius:12px;
+            font-size:1.1rem; cursor:pointer;
+            display:flex; align-items:center; justify-content:center;
+            box-shadow:0 4px 16px rgba(168,230,61,.35);
+            opacity:0; pointer-events:none;
+            transition:opacity .3s, transform .3s; z-index:999;
+        }
+        #scrollTopBtn.visible { opacity:1; pointer-events:auto; }
+        #scrollTopBtn:hover { transform:translateY(-2px); }
+
+        /* LOADING BAR */
+        #loadingBar {
+            position:fixed; top:0; left:0; width:0%; height:3px;
+            background:var(--accent); z-index:9999; transition:width .3s ease;
+        }
+
+        /* UTILITIES */
+        .text-accent        { color:var(--accent) !important; }
+        .text-primary-brand { color:var(--primary) !important; }
+        .bg-primary-brand   { background:var(--primary) !important; }
+        .bg-accent          { background:var(--accent) !important; }
+        .rounded-xl         { border-radius:14px !important; }
+        .font-syne          { font-family:'Syne',sans-serif !important; }
+        .fw-800             { font-weight:800 !important; }
+
+        /* STAGGER ANIMATION */
+        .stagger-in > * { opacity:0; animation:fadeUp .4s ease forwards; }
+        .stagger-in > *:nth-child(1) { animation-delay:.05s; }
+        .stagger-in > *:nth-child(2) { animation-delay:.10s; }
+        .stagger-in > *:nth-child(3) { animation-delay:.15s; }
+        .stagger-in > *:nth-child(4) { animation-delay:.20s; }
+        .stagger-in > *:nth-child(5) { animation-delay:.25s; }
+        .stagger-in > *:nth-child(6) { animation-delay:.30s; }
+    </style>
+</head>
+<body>
+
+    <div id="loadingBar"></div>
+
+    @{
+        var sessionRole = Context.Session.GetString("UserRole");
+        var sessionName = Context.Session.GetString("UserName");
+    }
+
+    <nav class="navbar navbar-expand-lg shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" asp-controller="Home" asp-action="Index">
+                <div class="brand-icon">
+                    <i class="bi bi-trophy-fill"></i>
+                </div>
+                CourtSync Pro
+            </a>
+
+            <button class="navbar-toggler" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#navMenu"
+                    aria-controls="navMenu" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navMenu">
+                <ul class="navbar-nav ms-auto align-items-center gap-1">
+
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Home" asp-action="Index">
+                            <i class="bi bi-house-fill"></i> Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Courts" asp-action="Index">
+                            <i class="bi bi-geo-alt-fill"></i> Courts
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" asp-controller="Bookings" asp-action="Index">
+                            <i class="bi bi-calendar-check-fill"></i> Bookings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+    <a class="nav-link" asp-controller="Ai" asp-action="Index">🤖 AI Assistant</a>
+</li>
+
+                    <li><div class="nav-divider"></div></li>
+
+                    @if (sessionRole == "User")
+                    {
+                        <li class="nav-item ms-1">
+                            <a class="btn btn-accent btn-sm"
+                               asp-controller="Bookings" asp-action="Create">
+                                <i class="bi bi-plus-circle-fill"></i> Book Now
+                            </a>
+                        </li>
+                        <li class="nav-item ms-2">
+                            <span class="nav-user-badge">
+                                <span class="online-dot"></span>
+                                <i class="bi bi-person-circle"></i>
+                                @sessionName
+                                <span class="role-tag">Player</span>
+                            </span>
+                        </li>
+                        <li class="nav-item">
+                            <form asp-controller="Account" asp-action="Logout"
+                                  method="post" class="d-inline m-0">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-outline-light btn-sm ms-1" style="border-radius:8px;">
+                                    <i class="bi bi-box-arrow-right"></i> Logout
+                                </button>
+                            </form>
+                        </li>
+                    }
+                    else if (sessionRole == "Owner")
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Courts" asp-action="Dashboard">
+                                <i class="bi bi-building-fill"></i> My Courts
+                            </a>
+                        </li>
+                        <li class="nav-item ms-1">
+                            <a class="btn btn-accent btn-sm"
+                               asp-controller="Courts" asp-action="Create">
+                                <i class="bi bi-plus-circle-fill"></i> Add Court
+                            </a>
+                        </li>
+                        <li class="nav-item ms-2">
+                            <span class="nav-user-badge">
+                                <span class="online-dot"></span>
+                                <i class="bi bi-shop"></i>
+                                @sessionName
+                                <span class="role-tag">Owner</span>
+                            </span>
+                        </li>
+                        <li class="nav-item">
+                            <form asp-controller="Account" asp-action="Logout"
+                                  method="post" class="d-inline m-0">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-outline-light btn-sm ms-1" style="border-radius:8px;">
+                                    <i class="bi bi-box-arrow-right"></i> Logout
+                                </button>
+                            </form>
+                        </li>
+                    }
+                    else if (sessionRole == "Admin")
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Admin" asp-action="Dashboard">
+                                <i class="bi bi-speedometer2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Admin" asp-action="PendingOwners">
+                                <i class="bi bi-person-check-fill"></i> Verify Owners
+                            </a>
+                        </li>
+                        <li class="nav-item ms-2">
+                            <span class="nav-user-badge admin-badge">
+                                <span class="online-dot"></span>
+                                <i class="bi bi-shield-lock-fill"></i>
+                                @sessionName
+                                <span class="role-tag admin-tag">Admin</span>
+                            </span>
+                        </li>
+                        <li class="nav-item">
+                            <form asp-controller="Account" asp-action="Logout"
+                                  method="post" class="d-inline m-0">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-outline-danger btn-sm ms-1" style="border-radius:8px;">
+                                    <i class="bi bi-box-arrow-right"></i> Logout
+                                </button>
+                            </form>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Account" asp-action="Login">
+                                <i class="bi bi-box-arrow-in-right"></i> Login
+                            </a>
+                        </li>
+                        <li class="nav-item ms-1">
+                            <a class="btn btn-accent btn-sm"
+                               asp-controller="Account" asp-action="RegisterUser">
+                                <i class="bi bi-person-plus-fill"></i> Sign Up
+                            </a>
+                        </li>
+
+                    }
+
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="py-4">
+        <div class="container">
+
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i>@TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @if (TempData["Info"] != null)
+            {
+                <div class="alert alert-info alert-dismissible fade show mb-3" role="alert">
+                    <i class="bi bi-info-circle-fill me-2"></i>@TempData["Info"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            @RenderBody()
+
+        </div>
+    </main>
+
+    <footer class="py-3 mt-auto">
+        <div class="container text-center small">
+            &copy; 2026 <span style="color:var(--accent);font-weight:600;">CourtSync Pro</span>
+            &nbsp;&middot;&nbsp; Where Athletes Meet Their Courts
+        </div>
+    </footer>
+
+    <button id="scrollTopBtn" title="Back to top">
+        <i class="bi bi-arrow-up"></i>
+    </button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (function(){
+            var bar=document.getElementById('loadingBar');
+            if(!bar)return;
+            bar.style.width='60%';
+            window.addEventListener('load',function(){
+                bar.style.width='100%';
+                setTimeout(function(){bar.style.opacity='0';},400);
+            });
+        })();
+        (function(){
+            var btn=document.getElementById('scrollTopBtn');
+            if(!btn)return;
+            window.addEventListener('scroll',function(){
+                btn.classList.toggle('visible',window.scrollY>300);
+            });
+            btn.addEventListener('click',function(){
+                window.scrollTo({top:0,behavior:'smooth'});
+            });
+        })();
+        (function(){
+            var path=window.location.pathname.toLowerCase();
+            document.querySelectorAll('.nav-link').forEach(function(link){
+                var href=(link.getAttribute('href')||'').toLowerCase();
+                if(href&&href!=='/'&&path.startsWith(href)){
+                    link.style.color='#fff';
+                    link.style.background='rgba(255,255,255,.1)';
+                }
+            });
+        })();
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

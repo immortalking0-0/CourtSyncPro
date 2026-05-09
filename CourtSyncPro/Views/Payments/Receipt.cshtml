@@ -1,0 +1,21 @@
+﻿@model CourtSyncPro.Models.Entities.Payment
+
+<h2>Payment Receipt</h2>
+
+<div class="card">
+    <div class="card-body">
+        <h5 class="text-success">✅ Payment Confirmed</h5>
+        <hr />
+        <p><strong>Transaction ID:</strong> @Model.TransactionId</p>
+        <p><strong>Amount Paid:</strong> Rs. @Model.Amount.ToString("N0")</p>
+        <p><strong>Method:</strong> @Model.Method</p>
+        <p><strong>Paid At:</strong> @Model.PaidAt.ToString("dd MMM yyyy, hh:mm tt")</p>
+        <p><strong>Court:</strong> @Model.Booking?.Court?.CourtName</p>
+        <p><strong>QR Code:</strong> @Model.Booking?.QRCode</p>
+    </div>
+</div>
+
+<a asp-action="Details" asp-controller="Bookings"
+       asp-route-id="@Model.BookingId" class="btn btn-primary mt-3">
+    View Booking
+</a>

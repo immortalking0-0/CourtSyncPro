@@ -1,0 +1,42 @@
+﻿@model CourtSyncPro.Models.Entities.Payment
+
+<h2>Complete Payment</h2>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@{
+    var booking = ViewBag.Booking as CourtSyncPro.Models.Entities.Booking;
+}
+
+<!-- Booking Summary -->
+<div class="card mb-4">
+    <div class="card-body">
+        <h5>Booking Summary</h5>
+        <p><strong>Court:</strong> @booking?.Court?.CourtName</p>
+        <p><strong>Slot:</strong> @booking?.TimeSlot?.StartTime.ToString("hh:mm tt") - @booking?.TimeSlot?.EndTime.ToString("hh:mm tt")</p>
+        <p><strong>Amount Due:</strong> Rs. @booking?.TotalAmount.ToString("N0")</p>
+    </div>
+</div>
+
+<!-- Payment Form -->
+<form asp-action="Pay" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="BookingId" />
+    <input type="hidden" asp-for="Amount" value="@booking?.TotalAmount" />
+
+    <div class="mb-3">
+        <label asp-for="Method" class="form-label">Payment Method</label>
+        <select asp-for="Method" class="form-select"
+                asp-items="Html.GetEnumSelectList<CourtSyncPro.Models.Entities.PaymentMethod>()">
+            <option value="">-- Select Method --</option>
+        </select>
+        <span asp-validation-for="Method" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-success btn-lg w-100">
+        Pay Rs. @booking?.TotalAmount.ToString("N0")
+    </button>
+</form>

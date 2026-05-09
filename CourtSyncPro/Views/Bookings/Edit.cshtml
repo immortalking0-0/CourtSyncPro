@@ -1,0 +1,483 @@
+﻿@model CourtSyncPro.Models.Entities.Booking
+@using CourtSyncPro.Models.Entities
+@{
+    ViewData["Title"] = "Edit Booking";
+}
+
+<style>
+    @@keyframes popIn {
+        0%   { opacity: 0; transform: scale(.9) translateY(22px); }
+        70%  { transform: scale(1.01) translateY(-2px); }
+        100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @@keyframes shimmer {
+        0%   { background-position: -600px 0; }
+        100% { background-position:  600px 0; }
+    }
+    @@keyframes labelIn {
+        from { opacity: 0; transform: translateX(-8px); }
+        to   { opacity: 1; transform: translateX(0); }
+    }
+    @@keyframes fadeUp {
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* LAYOUT */
+    .eb-wrap {
+        min-height: calc(100vh - 130px);
+        display: flex; align-items: center; justify-content: center;
+        padding: 2rem 1rem; position: relative; overflow: hidden;
+    }
+    .eb-blob {
+        position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+    }
+    .eb-blob-1 {
+        width: 320px; height: 320px; top: -80px; right: -80px;
+        background: radial-gradient(circle, rgba(168,230,61,.1) 0%, transparent 70%);
+    }
+    .eb-blob-2 {
+        width: 200px; height: 200px; bottom: 60px; left: -60px;
+        background: radial-gradient(circle, rgba(13,59,46,.06) 0%, transparent 70%);
+    }
+
+    /* CARD */
+    .eb-card {
+        background: var(--surface);
+        border: 1.5px solid var(--border);
+        border-radius: 22px;
+        box-shadow: 0 12px 48px rgba(13,59,46,.1), 0 2px 8px rgba(13,59,46,.05);
+        width: 100%; max-width: 600px;
+        position: relative; z-index: 1; overflow: hidden;
+        animation: popIn .55s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    .eb-card::before {
+        content: '';
+        position: absolute; top: 0; left: 0; right: 0; height: 4px;
+        background: linear-gradient(90deg, var(--accent), #c4ff45, var(--accent));
+        background-size: 600px 100%;
+        animation: shimmer 2.6s linear infinite;
+        border-radius: 22px 22px 0 0;
+    }
+
+    /* HEADER */
+    .eb-head {
+        padding: 1.8rem 2rem 1.4rem;
+        border-bottom: 1.5px solid var(--border);
+        display: flex; align-items: center; gap: 16px;
+    }
+    .eb-head-icon {
+        width: 52px; height: 52px; flex-shrink: 0;
+        background: linear-gradient(135deg, var(--primary), var(--primary-mid));
+        border-radius: 15px;
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 4px 16px rgba(13,59,46,.22);
+        transition: transform .3s;
+    }
+    .eb-head-icon:hover { transform: rotate(-6deg) scale(1.06); }
+    .eb-head-icon i { font-size: 1.4rem; color: var(--accent); }
+    .eb-head-title {
+        font-family: 'Syne', sans-serif; font-weight: 800;
+        font-size: 1.4rem; letter-spacing: -.03em;
+        color: var(--primary); margin: 0;
+    }
+    .eb-head-sub { font-size: .8rem; color: var(--text-faint); margin: 2px 0 0; }
+
+    .eb-ref-badge {
+        margin-left: auto; flex-shrink: 0;
+        display: inline-flex; align-items: center; gap: 6px;
+        background: rgba(168,230,61,.1); border: 1.5px solid rgba(168,230,61,.3);
+        border-radius: 10px; padding: 5px 13px;
+        font-family: 'Syne', sans-serif; font-weight: 700;
+        font-size: .8rem; color: var(--accent-dark);
+    }
+
+    /* FORM BODY */
+    .eb-body { padding: 1.6rem 2rem; }
+
+    .section-label {
+        font-size: .68rem; font-weight: 700; letter-spacing: .1em;
+        text-transform: uppercase; color: var(--text-faint);
+        margin-bottom: 12px;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* FIELD */
+    .eb-field { animation: labelIn .35s ease both; }
+    .eb-field:nth-child(1) { animation-delay: .07s; }
+    .eb-field:nth-child(2) { animation-delay: .13s; }
+    .eb-field:nth-child(3) { animation-delay: .19s; }
+    .eb-field:nth-child(4) { animation-delay: .25s; }
+
+    .eb-input-wrap, .eb-select-wrap {
+        display: flex;
+        border: 1.5px solid var(--border);
+        border-radius: 11px; overflow: hidden;
+        transition: border-color .2s, box-shadow .2s, transform .15s;
+        background: var(--surface);
+    }
+    .eb-input-wrap:focus-within,
+    .eb-select-wrap:focus-within {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3.5px rgba(168,230,61,.18);
+        transform: scale(1.008);
+    }
+    .eb-field-icon {
+        width: 44px; flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(168,230,61,.07);
+        border-right: 1.5px solid var(--border);
+        color: var(--primary-mid); font-size: 1rem;
+        transition: background .2s, color .2s;
+    }
+    .eb-input-wrap:focus-within  .eb-field-icon,
+    .eb-select-wrap:focus-within .eb-field-icon {
+        background: rgba(168,230,61,.15); color: var(--accent-dark);
+    }
+    .eb-select-wrap select,
+    .eb-input-wrap input {
+        flex: 1; border: none !important;
+        border-radius: 0 !important; box-shadow: none !important;
+        padding: 10px 14px; font-size: .88rem;
+        color: var(--text-main); background: transparent; outline: none;
+    }
+
+    /* STATUS CHIP SELECTOR */
+    .status-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+    .status-chip {
+        padding: 6px 16px; border-radius: 20px; font-size: .8rem; font-weight: 600;
+        border: 1.5px solid var(--border); background: var(--surface);
+        cursor: pointer; transition: all .2s; color: var(--text-muted);
+        display: flex; align-items: center; gap: 6px;
+        animation: fadeUp .25s ease both;
+    }
+    .status-chip i { font-size: .78rem; }
+    .status-chip.active-confirmed {
+        border-color: #27ae60; background: rgba(39,174,96,.1);
+        color: #1a7a3c;
+    }
+    .status-chip.active-pending {
+        border-color: #f39c12; background: rgba(243,156,18,.1);
+        color: #b57a00;
+    }
+    .status-chip.active-cancelled {
+        border-color: var(--danger); background: rgba(192,57,43,.09);
+        color: var(--danger);
+    }
+
+    /* AMOUNT PREVIEW */
+    .amount-preview {
+        display: flex; align-items: center; gap: 8px;
+        margin-top: 7px; font-size: .8rem; color: var(--text-faint);
+        animation: fadeUp .2s ease both;
+        min-height: 1.2em;
+    }
+    .amount-preview .ap-val {
+        font-family: 'Syne', sans-serif; font-weight: 700;
+        font-size: .9rem; color: #1a7a3c;
+    }
+
+    /* CHANGE SUMMARY */
+    .change-summary {
+        background: rgba(168,230,61,.05);
+        border: 1.5px solid rgba(168,230,61,.2);
+        border-radius: 12px; padding: .9rem 1.2rem;
+        margin-bottom: 1.2rem; font-size: .82rem;
+        animation: fadeUp .3s ease both;
+        display: none;
+    }
+    .change-summary.show { display: block; }
+    .change-summary-title {
+        font-size: .68rem; font-weight: 700; letter-spacing: .08em;
+        text-transform: uppercase; color: var(--accent-dark); margin-bottom: 6px;
+    }
+    .change-row {
+        display: flex; align-items: center; gap: 8px;
+        padding: 3px 0; color: var(--text-muted);
+    }
+    .change-row i { font-size: .8rem; color: var(--accent-dark); }
+    .change-row .old { text-decoration: line-through; color: var(--text-faint); }
+    .change-row .arrow { color: var(--text-faint); }
+    .change-row .new  { font-weight: 600; color: var(--primary); }
+
+    /* DIVIDER */
+    .eb-divider {
+        height: 1px; background: var(--border); margin: 1.4rem 0;
+        position: relative;
+    }
+    .eb-divider::after {
+        content: 'Save'; position: absolute;
+        left: 50%; top: 50%; transform: translate(-50%,-50%);
+        background: var(--surface); padding: 0 12px;
+        font-size: .68rem; font-weight: 700; letter-spacing: .1em;
+        text-transform: uppercase; color: var(--text-faint);
+    }
+
+    /* ACTIONS */
+    .eb-actions { display: flex; gap: 10px; }
+    .btn-save {
+        flex: 1; padding: 11px 0;
+        background: linear-gradient(135deg, var(--primary), var(--primary-mid));
+        color: #fff; border: none; border-radius: 11px;
+        font-family: 'Syne', sans-serif; font-weight: 700; font-size: .95rem;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        cursor: pointer; transition: transform .2s, box-shadow .2s;
+        box-shadow: 0 4px 18px rgba(13,59,46,.22);
+        position: relative; overflow: hidden;
+    }
+    .btn-save::after {
+        content: ''; position: absolute; inset: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent);
+        transform: translateX(-100%); transition: transform .5s;
+    }
+    .btn-save:hover::after { transform: translateX(100%); }
+    .btn-save:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(13,59,46,.28); }
+    .btn-save:active { transform: translateY(0); }
+
+    .btn-cancel-eb {
+        padding: 11px 22px; border-radius: 11px;
+        background: var(--bg); border: 1.5px solid var(--border);
+        font-family: 'Syne', sans-serif; font-weight: 700; font-size: .9rem;
+        color: var(--text-muted); text-decoration: none;
+        display: flex; align-items: center; justify-content: center; gap: 7px;
+        transition: background .2s, border-color .2s, color .2s, transform .2s;
+    }
+    .btn-cancel-eb:hover {
+        background: var(--border); color: var(--text-main);
+        transform: translateY(-1px);
+    }
+
+    .field-error {
+        font-size: .75rem; color: var(--danger); margin-top: 4px;
+        display: flex; align-items: center; gap: 4px;
+        animation: fadeUp .2s ease both;
+    }
+</style>
+
+<div class="eb-wrap">
+    <div class="eb-blob eb-blob-1"></div>
+    <div class="eb-blob eb-blob-2"></div>
+
+    <div class="eb-card">
+
+        <!-- Header -->
+        <div class="eb-head">
+            <div class="eb-head-icon">
+                <i class="bi bi-pencil-square"></i>
+            </div>
+            <div>
+                <h1 class="eb-head-title">Edit Booking</h1>
+                <p class="eb-head-sub">Update player, court, status or amount</p>
+            </div>
+            <div class="eb-ref-badge">
+                <i class="bi bi-hash"></i> #@Model.BookingId
+            </div>
+        </div>
+
+        <!-- Body -->
+        <div class="eb-body">
+            <form asp-action="Edit" method="post" id="editForm">
+                <input type="hidden" asp-for="BookingId" />
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger small mb-3"></div>
+
+                <!-- Assignment -->
+                <div class="section-label">Assignment</div>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6 eb-field">
+                        <label asp-for="UserId" class="form-label">Player</label>
+                        <div class="eb-select-wrap">
+                            <span class="eb-field-icon"><i class="bi bi-person-fill"></i></span>
+                            <select asp-for="UserId" id="playerSel">
+                                @foreach (var u in (List<User>)ViewBag.Users)
+                                {
+                                    <option value="@u.UserId" data-name="@u.Name">@u.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <span asp-validation-for="UserId" class="field-error"></span>
+                    </div>
+                    <div class="col-md-6 eb-field">
+                        <label asp-for="CourtId" class="form-label">Court</label>
+                        <div class="eb-select-wrap">
+                            <span class="eb-field-icon"><i class="bi bi-geo-alt-fill"></i></span>
+                            <select asp-for="CourtId" id="courtSel">
+                                @foreach (var c in (List<Court>)ViewBag.Courts)
+                                {
+                                    <option value="@c.CourtId" data-name="@c.CourtName">@c.CourtName</option>
+                                }
+                            </select>
+                        </div>
+                        <span asp-validation-for="CourtId" class="field-error"></span>
+                    </div>
+                </div>
+
+                <!-- Status & Amount -->
+                <div class="section-label mt-2">Status &amp; Amount</div>
+
+                <!-- Status chips (visual) + hidden real select -->
+                <div class="eb-field mb-3">
+                    <label class="form-label">Booking Status</label>
+                    <select asp-for="Status" id="statusSelect"
+                            asp-items="Html.GetEnumSelectList<BookingStatus>()"
+                            class="d-none"></select>
+                    <div class="status-chips" id="statusChips"></div>
+                    <span asp-validation-for="Status" class="field-error"></span>
+                </div>
+
+                <div class="col-md-6 eb-field mb-1" style="max-width:280px;">
+                    <label asp-for="TotalAmount" class="form-label">Total Amount</label>
+                    <div class="eb-input-wrap">
+                        <span class="eb-field-icon"><i class="bi bi-currency-rupee"></i></span>
+                        <input asp-for="TotalAmount" id="amountInput"
+                               type="number" step="0.01" min="0" />
+                    </div>
+                    <div class="amount-preview" id="amountPreview"></div>
+                    <span asp-validation-for="TotalAmount" class="field-error"></span>
+                </div>
+
+                <!-- Change summary -->
+                <div class="change-summary mt-3" id="changeSummary">
+                    <div class="change-summary-title">
+                        <i class="bi bi-pencil me-1"></i> Pending Changes
+                    </div>
+                    <div id="changeRows"></div>
+                </div>
+
+                <div class="eb-divider"></div>
+
+                <div class="eb-actions">
+                    <button type="submit" class="btn-save">
+                        <i class="bi bi-check-circle-fill"></i> Save Changes
+                    </button>
+                    <a asp-action="Index" class="btn-cancel-eb">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+<script>
+    // ── Status chip builder ──────────────────────────────────────────────
+    var statusSelect = document.getElementById('statusSelect');
+    var chipsWrap    = document.getElementById('statusChips');
+
+    var statusConfig = {
+        'Confirmed':  { icon: 'bi-check-circle-fill',  cls: 'active-confirmed' },
+        'Pending':    { icon: 'bi-hourglass-split',     cls: 'active-pending'   },
+        'Cancelled':  { icon: 'bi-x-circle-fill',       cls: 'active-cancelled' }
+    };
+
+    function buildChips() {
+        chipsWrap.innerHTML = '';
+        Array.from(statusSelect.options).forEach(function (opt, i) {
+            var cfg  = statusConfig[opt.text] || { icon: 'bi-circle', cls: '' };
+            var chip = document.createElement('div');
+            chip.className = 'status-chip';
+            chip.style.animationDelay = (i * .07) + 's';
+            chip.dataset.value = opt.value;
+            chip.innerHTML = '<i class="bi ' + cfg.icon + '"></i>' + opt.text;
+            chip.addEventListener('click', function () {
+                selectChip(chip, opt.value, cfg.cls);
+            });
+            if (opt.selected) chip.classList.add(cfg.cls);
+            chipsWrap.appendChild(chip);
+        });
+    }
+
+    function selectChip(chip, val, cls) {
+        chipsWrap.querySelectorAll('.status-chip').forEach(function (c) {
+            c.className = 'status-chip';
+        });
+        chip.classList.add(cls);
+        statusSelect.value = val;
+        trackChanges();
+    }
+
+    buildChips();
+
+    // ── Amount preview ───────────────────────────────────────────────────
+    var amountInput   = document.getElementById('amountInput');
+    var amountPreview = document.getElementById('amountPreview');
+
+    function updateAmountPreview() {
+        var v = parseFloat(amountInput.value);
+        if (isNaN(v) || amountInput.value === '') {
+            amountPreview.innerHTML = '';
+            return;
+        }
+        amountPreview.innerHTML =
+            '<i class="bi bi-tag-fill" style="font-size:.75rem;color:var(--accent-dark)"></i>' +
+            '<span class="ap-val">Rs. ' + v.toLocaleString('en-PK', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + '</span>';
+    }
+    amountInput.addEventListener('input', function () {
+        updateAmountPreview(); trackChanges();
+    });
+    updateAmountPreview();
+
+    // ── Change tracker ───────────────────────────────────────────────────
+    var origPlayer = document.getElementById('playerSel').value;
+    var origCourt  = document.getElementById('courtSel').value;
+    var origStatus = statusSelect.value;
+    var origAmount = amountInput.value;
+
+    var origPlayerName = document.querySelector('#playerSel option:checked')?.text || '';
+    var origCourtName  = document.querySelector('#courtSel option:checked')?.text  || '';
+    var origStatusName = document.querySelector('#statusSelect option:checked')?.text || '';
+
+    function trackChanges() {
+        var rows    = [];
+        var pSel    = document.getElementById('playerSel');
+        var cSel    = document.getElementById('courtSel');
+
+        if (pSel.value !== origPlayer) {
+            rows.push({ label: 'Player', old: origPlayerName, n: pSel.options[pSel.selectedIndex].text });
+        }
+        if (cSel.value !== origCourt) {
+            rows.push({ label: 'Court', old: origCourtName, n: cSel.options[cSel.selectedIndex].text });
+        }
+        if (statusSelect.value !== origStatus) {
+            rows.push({ label: 'Status', old: origStatusName, n: statusSelect.options[statusSelect.selectedIndex].text });
+        }
+        if (amountInput.value !== origAmount) {
+            rows.push({ label: 'Amount', old: 'Rs. ' + origAmount, n: 'Rs. ' + amountInput.value });
+        }
+
+        var summary   = document.getElementById('changeSummary');
+        var changeRows = document.getElementById('changeRows');
+
+        if (rows.length === 0) {
+            summary.classList.remove('show');
+            return;
+        }
+        summary.classList.add('show');
+        changeRows.innerHTML = rows.map(function (r) {
+            return '<div class="change-row">' +
+                '<i class="bi bi-arrow-right-short"></i>' +
+                '<strong>' + r.label + ':</strong>' +
+                '<span class="old">' + r.old + '</span>' +
+                '<span class="arrow">→</span>' +
+                '<span class="new">'  + r.n   + '</span>' +
+            '</div>';
+        }).join('');
+    }
+
+    document.getElementById('playerSel').addEventListener('change', trackChanges);
+    document.getElementById('courtSel').addEventListener('change',  trackChanges);
+
+    // focus scale on inputs
+    document.querySelectorAll('.eb-select-wrap select, .eb-input-wrap input').forEach(function (el) {
+        el.addEventListener('focus', function () {
+            this.closest('.eb-select-wrap, .eb-input-wrap').style.transform = 'scale(1.008)';
+        });
+        el.addEventListener('blur', function () {
+            this.closest('.eb-select-wrap, .eb-input-wrap').style.transform = '';
+        });
+    });
+</script>
+}

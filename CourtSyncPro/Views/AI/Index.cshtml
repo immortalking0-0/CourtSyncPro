@@ -1,0 +1,63 @@
+﻿@{
+    ViewData["Title"] = "AI Booking Assistant";
+}
+
+<div class="container mt-4">
+    <h2>🎾 AI Booking Assistant</h2>
+
+    <div class="card p-4">
+        <textarea id="userInput" class="form-control" rows="3"
+                  placeholder="e.g. Book a court for tomorrow evening..."></textarea>
+
+        <button class="btn btn-primary mt-3" onclick="getSuggestion()">
+            Get Suggestion
+        </button>
+    </div>
+
+    <!-- Loading spinner -->
+    <div id="loading" class="mt-3 text-muted" style="display:none;">
+        ⏳ Thinking...
+    </div>
+
+    <!-- AI Reply -->
+    <div id="replyBox" class="card p-4 mt-3" style="display:none;">
+        <h5>AI Suggestion:</h5>
+        <p id="replyText"></p>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        async function getSuggestion() {
+            const userInput = document.getElementById('userInput').value.trim();
+
+            if (!userInput) {
+                alert('Please enter your request.');
+                return;
+            }
+
+            // Show loading, hide old reply
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('replyBox').style.display = 'none';
+
+            try {
+                const res = await fetch('/ai/suggest-booking', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `userInput=${encodeURIComponent(userInput)}`
+                });
+
+                const data = await res.json();
+
+                // Show reply
+                document.getElementById('replyText').innerText = data.reply;
+                document.getElementById('replyBox').style.display = 'block';
+
+            } catch (err) {
+                alert('Something went wrong. Please try again.');
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+    </script>
+}
