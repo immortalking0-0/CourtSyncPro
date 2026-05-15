@@ -1,0 +1,133 @@
+@model CourtSyncPro.Models.Entities.Tournament
+@using CourtSyncPro.Models.Entities
+
+@{
+    ViewData["Title"] = "Edit Tournament";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">Edit Tournament</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit" method="post">
+                        @if (!ViewData.ModelState.IsValid)
+                        {
+                            <div asp-validation-summary="All" class="alert alert-danger"></div>
+                        }
+
+                        <input asp-for="TournamentId" type="hidden" />
+
+                        <div class="mb-3">
+                            <label asp-for="TournamentName" class="form-label"></label>
+                            <input asp-for="TournamentName" class="form-control" />
+                            <span asp-validation-for="TournamentName" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label"></label>
+                            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="SportType" class="form-label"></label>
+                                    <select asp-for="SportType" class="form-select">
+                                        @foreach (var sport in Enum.GetValues<SportType>())
+                                        {
+                                            <option value="@sport" selected="@(sport == Model.SportType)">@sport</option>
+                                        }
+                                    </select>
+                                    <span asp-validation-for="SportType" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="CourtId" class="form-label"></label>
+                                    <select asp-for="CourtId" class="form-select">
+                                        @foreach (var court in (List<Court>)ViewBag.Courts)
+                                        {
+                                            <option value="@court.CourtId" selected="@(court.CourtId == Model.CourtId)">@court.CourtName</option>
+                                        }
+                                    </select>
+                                    <span asp-validation-for="CourtId" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="TournamentDate" class="form-label"></label>
+                                    <input asp-for="TournamentDate" type="datetime-local" class="form-control" />
+                                    <span asp-validation-for="TournamentDate" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="RegistrationDeadline" class="form-label"></label>
+                                    <input asp-for="RegistrationDeadline" type="datetime-local" class="form-control" />
+                                    <span asp-validation-for="RegistrationDeadline" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="MaxTeams" class="form-label"></label>
+                                    <input asp-for="MaxTeams" type="number" class="form-control" />
+                                    <span asp-validation-for="MaxTeams" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label asp-for="RegistrationFee" class="form-label"></label>
+                                    <input asp-for="RegistrationFee" type="number" step="0.01" class="form-control" />
+                                    <span asp-validation-for="RegistrationFee" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="PrizeInformation" class="form-label"></label>
+                            <textarea asp-for="PrizeInformation" class="form-control" rows="3"></textarea>
+                            <span asp-validation-for="PrizeInformation" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Status" class="form-label"></label>
+                            <select asp-for="Status" class="form-select">
+                                @foreach (var status in Enum.GetValues<TournamentStatus>())
+                                {
+                                    <option value="@status" selected="@(status == Model.Status)">@status</option>
+                                }
+                            </select>
+                            <span asp-validation-for="Status" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-warning btn-lg">
+                                <i class="fas fa-save"></i> Update Tournament
+                            </button>
+                            <a href="@Url.Action("Index", "Tournaments")" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

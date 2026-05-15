@@ -4,6 +4,7 @@ using CourtSyncPro.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CourtSyncPro.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260512193935_Tournament")]
+    partial class Tournament
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -53,7 +56,7 @@ namespace CourtSyncPro.Migrations
                             AdminId = 1,
                             Email = "admin@courtsync.com",
                             Name = "Super Admin",
-                            PasswordHash = "$2a$11$/r0AgeKfrMInOX6Dz7pgweZHtZo.3Mo7qUtob4jtjYNltR/753//K"
+                            PasswordHash = "$2a$11$nKWvczi0OGM0Oxq6kf6rDOdMz3brJGZgb/RJMzx3tHlNorMEnfJPi"
                         });
                 });
 

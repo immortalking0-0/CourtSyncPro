@@ -1,0 +1,115 @@
+@model CourtSyncPro.Models.Entities.Tournament
+@using CourtSyncPro.Models.Entities
+
+@{
+    ViewData["Title"] = Model.TournamentName;
+}
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h1 class="card-title">@Model.TournamentName</h1>
+                    <div class="mb-3">
+                        <span class="badge bg-info">@Model.SportType</span>
+                        <span class="badge" style="background-color: @GetStatusColor(Model.Status)">@Model.Status</span>
+                    </div>
+
+                    <p class="card-text">@Model.Description</p>
+
+                    <div class="row text-muted">
+                        <div class="col-md-6">
+                            <p><strong>Tournament Date:</strong> @Model.TournamentDate.ToString("MMMM dd, yyyy")</p>
+                            <p><strong>Registration Deadline:</strong> @Model.RegistrationDeadline.ToString("MMMM dd, yyyy")</p>
+                            <p><strong>Court:</strong> @Model.Court?.CourtName</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Max Teams:</strong> @Model.MaxTeams</p>
+                            <p><strong>Registration Fee:</strong> Rs @Model.RegistrationFee.ToString("N2")</p>
+                            <p><strong>Registered:</strong> @(Model.Registrations.Count(r => r.Status != RegistrationStatus.Cancelled)) / @Model.MaxTeams</p>
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <h5>Prize Information</h5>
+                    <p>@Model.PrizeInformation</p>
+
+                    @if (Context.Session.GetString("UserRole") != "Admin" && Context.Session.GetString("UserRole") != "CourtOwner")
+                    {
+                        <hr />
+                        @if (ViewBag.AlreadyRegistered)
+                        {
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle"></i> You are registered for this tournament!
+                                <a href="@Url.Action("MyRegistrations", "Tournaments")" class="alert-link">View my registrations</a>
+                            </div>
+                        }
+                        else if (ViewBag.SpotsLeft <= 0)
+                        {
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i> This tournament is full!
+                            </div>
+                        }
+                        else
+                        {
+                            <a href="@Url.Action("Register", "Tournaments", new { id = Model.TournamentId })" class="btn btn-primary btn-lg">
+                                <i class="fas fa-user-plus"></i> Register Now (@ViewBag.SpotsLeft spots left)
+                            </a>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Participants (@Model.Registrations.Count(r => r.Status != RegistrationStatus.Cancelled))</h5>
+                </div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    @if (Model.Registrations.Any(r => r.Status != RegistrationStatus.Cancelled))
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var reg in Model.Registrations.Where(r => r.Status != RegistrationStatus.Cancelled).OrderBy(r => r.RegisteredAt))
+                            {
+                                <li class="list-group-item">
+                                    <strong>@reg.TeamName</strong>
+                                    <br />
+                                    <small class="text-muted">@reg.User?.Name</small>
+                                    <br />
+                                    <small class="text-muted">@reg.NumberOfPlayers players</small>
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="text-muted text-center">No registrations yet</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="@Url.Action("Index", "Tournaments")" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Tournaments
+        </a>
+    </div>
+</div>
+
+@functions {
+    private string GetStatusColor(TournamentStatus status)
+    {
+        return status switch
+        {
+            TournamentStatus.Upcoming => "#0dcaf0",
+            TournamentStatus.Ongoing => "#198754",
+            TournamentStatus.Completed => "#6c757d",
+            TournamentStatus.Cancelled => "#dc3545",
+            _ => "#0d6efd"
+        };
+    }
+}

@@ -154,17 +154,16 @@ namespace CourtSyncPro.Controllers
 
         public async Task<IActionResult> Dashboard()
         {
-            var ownerIdStr = HttpContext.Session.GetString("UserId");
+            var ownerId = HttpContext.Session.GetInt32("UserId");
+
             var role = HttpContext.Session.GetString("UserRole");
 
-            if (ownerIdStr == null || role != "Owner")
+            if (!ownerId.HasValue || role != "Owner")
                 return RedirectToAction("Login", "Account");
 
-            int ownerId = int.Parse(ownerIdStr);
-
             var myCourts = await _db.Courts
-                                    .Where(c => c.OwnerId == ownerId)
-                                    .ToListAsync();
+                .Where(c => c.OwnerId == ownerId.Value)
+                .ToListAsync();
 
             return View(myCourts);
         }

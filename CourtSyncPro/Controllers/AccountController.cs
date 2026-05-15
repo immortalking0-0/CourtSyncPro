@@ -11,89 +11,145 @@ namespace CourtSyncPro.Controllers
     {
         private readonly ApplicationDbContext _db;
 
-        public AccountController(ApplicationDbContext db) => _db = db;
+        public AccountController(ApplicationDbContext db)
+        {
+            _db = db;
+        }
 
-        // ── Show unified login page ──────────────────────────────
+        // ── LOGIN PAGE ───────────────────────────────────────────
         [HttpGet]
         public IActionResult Login(string? returnUrl = null)
         {
-            if (HttpContext.Session.GetString("UserId") != null)
+            // FIXED: Use GetInt32 instead of GetString
+            if (HttpContext.Session.GetInt32("UserId") != null)
                 return RedirectToAction("Index", "Home");
 
             ViewBag.ReturnUrl = returnUrl;
+
             return View(new LoginViewModel());
         }
 
-        // ── Process login ────────────────────────────────────────
-        [HttpPost, ValidateAntiForgeryToken]
+        // ── PROCESS LOGIN ────────────────────────────────────────
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
         {
-            if (!ModelState.IsValid) return View(model);
+            if (!ModelState.IsValid)
+                return View(model);
 
+            // ── USER LOGIN ───────────────────────────────────────
             if (model.Role == "User")
             {
-                var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
-                if (user == null || !BCrypt.Net.BCrypt.Verify(model.Password, user.PasswordHash))
+                var user = await _db.Users
+                    .FirstOrDefaultAsync(u => u.Email == model.Email);
+
+                if (user == null ||
+                    !BCrypt.Net.BCrypt.Verify(model.Password, user.PasswordHash))
                 {
                     ModelState.AddModelError("", "Invalid email or password.");
                     return View(model);
                 }
-                HttpContext.Session.SetString("UserId", user.UserId.ToString());
+
+                // FIXED: Store as INT
+                HttpContext.Session.SetInt32("UserId", user.UserId);
+
                 HttpContext.Session.SetString("UserName", user.Name);
+
                 HttpContext.Session.SetString("UserRole", "User");
             }
+
+            // ── OWNER LOGIN ──────────────────────────────────────
             else if (model.Role == "Owner")
             {
-                var owner = await _db.CourtOwners.FirstOrDefaultAsync(o => o.Email == model.Email);
-                if (owner == null || !BCrypt.Net.BCrypt.Verify(model.Password, owner.PasswordHash))
+                var owner = await _db.CourtOwners
+                    .FirstOrDefaultAsync(o => o.Email == model.Email);
+
+                if (owner == null ||
+                    !BCrypt.Net.BCrypt.Verify(model.Password, owner.PasswordHash))
                 {
                     ModelState.AddModelError("", "Invalid email or password.");
                     return View(model);
                 }
+
                 if (!owner.IsVerified)
                 {
                     ModelState.AddModelError("", "Your account is pending admin verification.");
                     return View(model);
                 }
-                HttpContext.Session.SetString("UserId", owner.OwnerId.ToString());
+
+                // FIXED: Store as INT
+                HttpContext.Session.SetInt32("UserId", owner.OwnerId);
+
+                // Important for tournaments/courts
+                HttpContext.Session.SetInt32("OwnerId", owner.OwnerId);
+
                 HttpContext.Session.SetString("UserName", owner.BusinessName);
+
                 HttpContext.Session.SetString("UserRole", "Owner");
             }
+
+            // ── ADMIN LOGIN ──────────────────────────────────────
             else if (model.Role == "Admin")
             {
-                var admin = await _db.Admins.FirstOrDefaultAsync(a => a.Email == model.Email);
-                if (admin == null || !BCrypt.Net.BCrypt.Verify(model.Password, admin.PasswordHash))
+                var admin = await _db.Admins
+                    .FirstOrDefaultAsync(a => a.Email == model.Email);
+
+                if (admin == null ||
+                    !BCrypt.Net.BCrypt.Verify(model.Password, admin.PasswordHash))
                 {
                     ModelState.AddModelError("", "Invalid admin credentials.");
                     return View(model);
                 }
-                HttpContext.Session.SetString("UserId", admin.AdminId.ToString());
+
+                // FIXED: Store as INT
+                HttpContext.Session.SetInt32("UserId", admin.AdminId);
+
                 HttpContext.Session.SetString("UserName", admin.Name);
+
                 HttpContext.Session.SetString("UserRole", "Admin");
             }
 
-            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            // ── RETURN URL ───────────────────────────────────────
+            if (!string.IsNullOrEmpty(returnUrl) &&
+                Url.IsLocalUrl(returnUrl))
+            {
                 return Redirect(returnUrl);
+            }
 
+            // ── ROLE-BASED REDIRECT ──────────────────────────────
             return HttpContext.Session.GetString("UserRole") switch
             {
                 "Owner" => RedirectToAction("Dashboard", "Courts"),
+
                 "Admin" => RedirectToAction("Dashboard", "Admin"),
+
                 _ => RedirectToAction("Index", "Home")
             };
         }
 
-        // ── Customer signup ──────────────────────────────────────
-        [HttpGet] public IActionResult RegisterUser() => View(new UserRegisterViewModel());
+        // ── USER REGISTRATION PAGE ──────────────────────────────
+        [HttpGet]
+        public IActionResult RegisterUser()
+        {
+            return View(new UserRegisterViewModel());
+        }
 
-        [HttpPost, ValidateAntiForgeryToken]
+        // ── PROCESS USER REGISTRATION ───────────────────────────
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> RegisterUser(UserRegisterViewModel model)
         {
-            if (!ModelState.IsValid) return View(model);
+            if (!ModelState.IsValid)
+                return View(model);
 
-            if (await _db.Users.AnyAsync(u => u.Email == model.Email))
+            bool emailExists = await _db.Users
+                .AnyAsync(u => u.Email == model.Email);
+
+            if (emailExists)
             {
-                ModelState.AddModelError("Email", "This email is already registered.");
+                ModelState.AddModelError("Email",
+                    "This email is already registered.");
+
                 return View(model);
             }
 
@@ -107,28 +163,45 @@ namespace CourtSyncPro.Controllers
             };
 
             _db.Users.Add(user);
+
             await _db.SaveChangesAsync();
 
-            // Auto-login after registration
-            HttpContext.Session.SetString("UserId", user.UserId.ToString());
+            // AUTO LOGIN AFTER REGISTRATION
+            HttpContext.Session.SetInt32("UserId", user.UserId);
+
             HttpContext.Session.SetString("UserName", user.Name);
+
             HttpContext.Session.SetString("UserRole", "User");
 
-            TempData["Success"] = "Welcome to CourtSync Pro! Your account has been created.";
+            TempData["Success"] =
+                "Welcome to CourtSync Pro! Your account has been created.";
+
             return RedirectToAction("Index", "Home");
         }
 
-        // ── Court Owner signup ───────────────────────────────────
-        [HttpGet] public IActionResult RegisterOwner() => View(new OwnerRegisterViewModel());
+        // ── OWNER REGISTRATION PAGE ─────────────────────────────
+        [HttpGet]
+        public IActionResult RegisterOwner()
+        {
+            return View(new OwnerRegisterViewModel());
+        }
 
-        [HttpPost, ValidateAntiForgeryToken]
+        // ── PROCESS OWNER REGISTRATION ──────────────────────────
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> RegisterOwner(OwnerRegisterViewModel model)
         {
-            if (!ModelState.IsValid) return View(model);
+            if (!ModelState.IsValid)
+                return View(model);
 
-            if (await _db.CourtOwners.AnyAsync(o => o.Email == model.Email))
+            bool emailExists = await _db.CourtOwners
+                .AnyAsync(o => o.Email == model.Email);
+
+            if (emailExists)
             {
-                ModelState.AddModelError("Email", "This email is already registered.");
+                ModelState.AddModelError("Email",
+                    "This email is already registered.");
+
                 return View(model);
             }
 
@@ -140,22 +213,27 @@ namespace CourtSyncPro.Controllers
                 NationalID = model.NationalID,
                 City = model.City,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(model.Password),
-                IsVerified = false,  // Admin must approve
+                IsVerified = false,
                 RegisterDate = DateTime.UtcNow
             };
 
             _db.CourtOwners.Add(owner);
+
             await _db.SaveChangesAsync();
 
-            TempData["Info"] = "Registration submitted! An admin will verify your account shortly.";
+            TempData["Info"] =
+                "Registration submitted! An admin will verify your account shortly.";
+
             return RedirectToAction("Login");
         }
 
-        // ── Logout ───────────────────────────────────────────────
-        [HttpPost, ValidateAntiForgeryToken]
+        // ── LOGOUT ───────────────────────────────────────────────
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult Logout()
         {
             HttpContext.Session.Clear();
+
             return RedirectToAction("Login");
         }
     }

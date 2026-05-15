@@ -17,6 +17,10 @@ namespace CourtSyncPro.Data
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Admin> Admins { get; set; }
 
+        // Add these two DbSets with the others
+        public DbSet<Tournament> Tournaments { get; set; }
+        public DbSet<TournamentRegistration> TournamentRegistrations { get; set; }
+
         // ↓ PASTE HERE — replace the old OnModelCreating entirely
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -53,7 +57,30 @@ namespace CourtSyncPro.Data
                 .HasForeignKey<Payment>(p => p.BookingId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-                modelBuilder.Entity<Admin>().HasData(new Admin
+
+            // Tournament → Court (many-to-one)
+            modelBuilder.Entity<Tournament>()
+                .HasOne(t => t.Court)
+                .WithMany()
+                .HasForeignKey(t => t.CourtId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Tournament → Registrations (one-to-many)
+            modelBuilder.Entity<TournamentRegistration>()
+                .HasOne(r => r.Tournament)
+                .WithMany(t => t.Registrations)
+                .HasForeignKey(r => r.TournamentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // User → TournamentRegistrations (one-to-many)
+            modelBuilder.Entity<TournamentRegistration>()
+                .HasOne(r => r.User)
+                .WithMany()
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+
+            modelBuilder.Entity<Admin>().HasData(new Admin
                 {
                     AdminId = 1,
                     Name = "Super Admin",

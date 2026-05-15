@@ -1,0 +1,80 @@
+@model CourtSyncPro.Models.Entities.TournamentRegistration
+
+@{
+    ViewData["Title"] = "Register for Tournament";
+}
+
+// Read the Register view for tournament registration.
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Register for @ViewBag.Tournament?.TournamentName</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Register" method="post">
+                        @if (!ViewData.ModelState.IsValid)
+                        {
+                            <div asp-validation-summary="All" class="alert alert-danger"></div>
+                        }
+
+                        <div class="mb-3">
+                            <label asp-for="TeamName" class="form-label"></label>
+                            <input asp-for="TeamName" class="form-control" placeholder="Enter your team name" />
+                            <span asp-validation-for="TeamName" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="ContactNumber" class="form-label"></label>
+                            <input asp-for="ContactNumber" class="form-control" placeholder="e.g., +92-300-1234567" />
+                            <span asp-validation-for="ContactNumber" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="NumberOfPlayers" class="form-label"></label>
+                            <input asp-for="NumberOfPlayers" type="number" class="form-control" placeholder="Number of players" />
+                            <span asp-validation-for="NumberOfPlayers" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="paymentMethod" class="form-label">Payment Method</label>
+                            <select name="paymentMethod" id="paymentMethod" class="form-select" required>
+                                <option value="">-- Select Payment Method --</option>
+                                <option value="CreditCard">Credit Card</option>
+                                <option value="DebitCard">Debit Card</option>
+                                <option value="BankTransfer">Bank Transfer</option>
+                                <option value="Cash">Cash Payment</option>
+                            </select>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <strong>Registration Fee:</strong> Rs @ViewBag.Tournament?.RegistrationFee.ToString("N2")
+                        </div>
+
+                        <input asp-for="TournamentId" type="hidden" />
+                        <input asp-for="UserId" type="hidden" />
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-check"></i> Confirm Registration
+                            </button>
+
+                            <a href="@Url.Action("Details", "Tournaments", new { id = Model.TournamentId })"
+                                   class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

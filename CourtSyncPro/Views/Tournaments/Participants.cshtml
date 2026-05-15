@@ -1,0 +1,148 @@
+@model CourtSyncPro.Models.Entities.Tournament
+@using CourtSyncPro.Models.Entities
+
+@{
+    ViewData["Title"] = "Tournament Participants";
+}
+
+// Read the Participants view for tournament participants.
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-12">
+            <h1 class="mb-2">@Model.TournamentName</h1>
+            <p class="text-muted mb-4">
+                Date: @Model.TournamentDate.ToString("MMMM dd, yyyy") | 
+                Court: @Model.Court?.CourtName
+            </p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        Registered Participants 
+                        <span class="badge bg-light text-dark">
+                            @(Model.Registrations.Count(r => r.Status != RegistrationStatus.Cancelled))
+                        </span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Registrations.Any(r => r.Status != RegistrationStatus.Cancelled))
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Team Name</th>
+                                        <th>Player Name</th>
+                                        <th>Contact</th>
+                                        <th>Players</th>
+                                        <th>Fee Paid</th>
+                                        <th>Status</th>
+                                        <th>Registered On</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var reg in Model.Registrations.Where(r => r.Status != RegistrationStatus.Cancelled).OrderBy(r => r.RegisteredAt))
+                                    {
+                                        <tr>
+                                            <td><strong>@reg.TeamName</strong></td>
+                                            <td>@reg.User?.Name</td>
+                                            <td>@reg.ContactNumber</td>
+                                            <td>@reg.NumberOfPlayers</td>
+                                            <td>Rs @reg.FeePaid.ToString("N2")</td>
+                                            <td>
+                                                <span class="badge" style="background-color: @GetStatusColor(reg.Status)">
+                                                    @reg.Status
+                                                </span>
+                                            </td>
+                                            <td>@reg.RegisteredAt.ToString("MMM dd, yyyy")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="alert alert-info mt-3">
+                            <strong>Total Revenue:</strong> Rs @(Model.Registrations
+                                .Where(r => r.Status != RegistrationStatus.Cancelled)
+                                .Sum(r => r.FeePaid)
+                                .ToString("N2"))
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <p class="text-muted">No active registrations yet</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @if (Model.Registrations.Any(r => r.Status == RegistrationStatus.Cancelled))
+            {
+                <div class="card shadow mt-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0">
+                            Cancelled Registrations 
+                            <span class="badge bg-light text-dark">
+                                @(Model.Registrations.Count(r => r.Status == RegistrationStatus.Cancelled))
+                            </span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover opacity-75">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Team Name</th>
+                                        <th>Player Name</th>
+                                        <th>Contact</th>
+                                        <th>Players</th>
+                                        <th>Fee Paid</th>
+                                        <th>Registered On</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var reg in Model.Registrations.Where(r => r.Status == RegistrationStatus.Cancelled).OrderBy(r => r.RegisteredAt))
+                                    {
+                                        <tr>
+                                            <td><strong>@reg.TeamName</strong></td>
+                                            <td>@reg.User?.Name</td>
+                                            <td>@reg.ContactNumber</td>
+                                            <td>@reg.NumberOfPlayers</td>
+                                            <td>Rs @reg.FeePaid.ToString("N2")</td>
+                                            <td>@reg.RegisteredAt.ToString("MMM dd, yyyy")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="@Url.Action("Index", "Tournaments")" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Tournaments
+        </a>
+    </div>
+</div>
+
+@functions {
+    private string GetStatusColor(RegistrationStatus status)
+    {
+        return status switch
+        {
+            RegistrationStatus.Confirmed => "#198754",
+            RegistrationStatus.Pending => "#ffc107",
+            RegistrationStatus.Cancelled => "#dc3545",
+            _ => "#0d6efd"
+        };
+    }
+}
