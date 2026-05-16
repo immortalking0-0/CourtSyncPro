@@ -21,6 +21,10 @@ namespace CourtSyncPro.Data
         public DbSet<Tournament> Tournaments { get; set; }
         public DbSet<TournamentRegistration> TournamentRegistrations { get; set; }
 
+        //Chat Messaages and Requests
+        public DbSet<ChatRequest> ChatRequests { get; set; }
+        public DbSet<ChatMessage> ChatMessages { get; set; }
+
         // ↓ PASTE HERE — replace the old OnModelCreating entirely
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -77,6 +81,33 @@ namespace CourtSyncPro.Data
                 .HasOne(r => r.User)
                 .WithMany()
                 .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+
+            // ChatRequest relationships
+            modelBuilder.Entity<ChatRequest>()
+                .HasOne(r => r.FromUser)
+                .WithMany()
+                .HasForeignKey(r => r.FromUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ChatRequest>()
+                .HasOne(r => r.ToUser)
+                .WithMany()
+                .HasForeignKey(r => r.ToUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // ChatMessage relationships
+            modelBuilder.Entity<ChatMessage>()
+                .HasOne(m => m.FromUser)
+                .WithMany()
+                .HasForeignKey(m => m.FromUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<ChatMessage>()
+                .HasOne(m => m.ToUser)
+                .WithMany()
+                .HasForeignKey(m => m.ToUserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
 

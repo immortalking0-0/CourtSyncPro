@@ -1,0 +1,309 @@
+﻿@{
+    ViewData["Title"] = "Online Players";
+    var myId = (int)ViewBag.MyId;
+    var onlinePlayers = (List<CourtSyncPro.Models.Entities.User>)ViewBag.OnlinePlayers;
+    var sentRequests = (List<int>)ViewBag.SentRequests;
+    var acceptedChats = (List<int>)ViewBag.AcceptedChats;
+    var pendingForMe = (List<CourtSyncPro.Models.Entities.ChatRequest>)ViewBag.PendingForMe;
+}
+
+<!-- SignalR -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-0">
+            <i class="bi bi-people-fill text-success me-2"></i>Online Players
+        </h3>
+        <p class="text-muted small mb-0">
+            Players currently on CourtSync Pro
+        </p>
+    </div>
+    <span class="badge bg-success fs-6" id="online-count">
+        @onlinePlayers.Count online
+    </span>
+</div>
+
+<!-- Pending requests FOR me -->
+@if (pendingForMe.Any())
+{
+    <div class="card border-warning mb-4 p-3">
+        <h6 class="fw-bold mb-3">
+            <i class="bi bi-bell-fill text-warning me-2"></i>
+            Pending Chat Requests (@pendingForMe.Count)
+        </h6>
+        @foreach (var req in pendingForMe)
+        {
+            <div class="d-flex align-items-center justify-content-between
+                p-2 bg-light rounded mb-2" id="req-@req.RequestId">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle bg-primary d-flex align-items-center
+                        justify-content-center text-white fw-bold"
+                         style="width:38px;height:38px">
+                        @req.FromUser.Name[0]
+                    </div>
+                    <div>
+                        <div class="fw-semibold">@req.FromUser.Name</div>
+                        <div class="text-muted small">wants to chat with you</div>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-success btn-sm"
+                            onclick="acceptRequest(@req.RequestId)">
+                        <i class="bi bi-check-lg me-1"></i>Accept
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm"
+                            onclick="declineRequest(@req.RequestId)">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<!-- Online Players Grid -->
+<div class="row g-3" id="online-players-grid">
+    @if (!onlinePlayers.Any())
+    {
+        <div class="col-12 text-center py-5 text-muted" id="no-players">
+            <i class="bi bi-wifi-off fs-1 d-block mb-2"></i>
+            <h5>No other players online right now</h5>
+            <p>Come back later to find players to chat with!</p>
+        </div>
+    }
+    else
+    {
+        @foreach (var player in onlinePlayers)
+        {
+            <div class="col-md-6 col-lg-4" id="player-card-@player.UserId">
+                <div class="card p-3 h-100">
+                    <div class="d-flex align-items-center gap-3">
+                        <!-- Avatar -->
+                        <div class="rounded-circle d-flex align-items-center
+                            justify-content-center text-white fw-bold fs-4"
+                             style="width:52px;height:52px;min-width:52px;
+                            background:linear-gradient(135deg,#1a3c5e,#2d6a9f)">
+                            @player.Name[0]
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold">@player.Name</div>
+                            <div class="d-flex align-items-center gap-1 mt-1">
+                                <span class="rounded-circle bg-success"
+                                      style="width:8px;height:8px;
+                                display:inline-block"></span>
+                                <span class="text-success small fw-semibold">
+                                    Online now
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        @if (acceptedChats.Contains(player.UserId))
+                        {
+                            <a href="/Chat/With/@player.UserId"
+                                   class="btn btn-accent btn-sm w-100">
+                                <i class="bi bi-chat-dots me-1"></i>Open Chat
+                            </a>
+                        }
+                        else if (sentRequests.Contains(player.UserId))
+                        {
+                            <button class="btn btn-outline-secondary btn-sm w-100"
+                                    disabled>
+                                <i class="bi bi-clock me-1"></i>Request Sent
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-primary btn-sm w-100"
+                                    id="req-btn-@player.UserId"
+                                    onclick="sendRequest(@player.UserId,
+                                '@player.Name')">
+                                <i class="bi bi-person-plus me-1"></i>
+                                Send Chat Request
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+<!-- Toast notification -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index:9999">
+    <div id="chat-toast" class="toast align-items-center text-white border-0"
+         role="alert" style="background:#1a3c5e">
+        <div class="d-flex">
+            <div class="toast-body fw-semibold" id="toast-msg">
+                Notification
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto"
+                    data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const myId = @myId;
+
+        // ── Build SignalR connection ──────────────────────────────
+        const conn = new signalR.HubConnectionBuilder()
+        .withUrl('/chatHub', {
+        headers: { 'X-UserId': myId }
+        })
+        .withAutomaticReconnect()
+        .build();
+
+        // ── Update online list ────────────────────────────────────
+        conn.on('UpdateOnlineUsers', function(users) {
+        document.getElementById('online-count').textContent =
+        (users.length - 1) + ' online';
+
+        users.forEach(function(u) {
+        if (u.userId === myId) return;
+        const card = document.getElementById('player-card-' + u.userId);
+        if (!card) {
+        // New player came online — add card
+        const grid = document.getElementById('online-players-grid');
+        const noPlayers = document.getElementById('no-players');
+        if (noPlayers) noPlayers.remove();
+
+        const div = document.createElement('div');
+        div.className = 'col-md-6 col-lg-4';
+        div.id = 'player-card-' + u.userId;
+        div.innerHTML = `
+        <div class="card p-3 h-100">
+        <div class="d-flex align-items-center gap-3">
+        <div class="rounded-circle d-flex align-items-center
+        justify-content-center text-white fw-bold fs-4"
+        style="width:52px;height:52px;min-width:52px;
+        background:linear-gradient(135deg,#1a3c5e,#2d6a9f)">
+        ${u.name[0]}
+        </div>
+        <div class="flex-grow-1">
+        <div class="fw-bold">${u.name}</div>
+        <div class="d-flex align-items-center gap-1 mt-1">
+        <span class="rounded-circle bg-success"
+        style="width:8px;height:8px;display:inline-block"></span>
+        <span class="text-success small fw-semibold">Online now</span>
+        </div>
+        </div>
+        </div>
+        <div class="mt-3">
+        <button class="btn btn-primary btn-sm w-100"
+        id="req-btn-${u.userId}"
+        onclick="sendRequest(${u.userId},'${u.name}')">
+        <i class="bi bi-person-plus me-1"></i>Send Chat Request
+        </button>
+        </div>
+        </div>`;
+        grid.appendChild(div);
+        }
+        });
+
+        // Remove cards of players who went offline
+        document.querySelectorAll('[id^="player-card-"]').forEach(function(card) {
+        const uid = parseInt(card.id.replace('player-card-', ''));
+        if (!users.find(u => u.userId === uid)) card.remove();
+        });
+        });
+
+        // ── Incoming chat request ─────────────────────────────────
+        conn.on('ReceiveChatRequest', function(data) {
+        showToast('💬 ' + data.fromName + ' wants to chat with you!');
+
+        const container = document.querySelector('.card.border-warning')
+        || createRequestBox();
+
+        const div = document.createElement('div');
+        div.className = 'd-flex align-items-center justify-content-between p-2 bg-light rounded mb-2';
+        div.id = 'req-' + data.requestId;
+        div.innerHTML = `
+        <div class="d-flex align-items-center gap-2">
+        <div class="rounded-circle bg-primary d-flex align-items-center
+        justify-content-center text-white fw-bold"
+        style="width:38px;height:38px">${data.fromName[0]}</div>
+        <div>
+        <div class="fw-semibold">${data.fromName}</div>
+        <div class="text-muted small">wants to chat with you</div>
+        </div>
+        </div>
+        <div class="d-flex gap-2">
+        <button class="btn btn-success btn-sm"
+        onclick="acceptRequest(${data.requestId})">
+        <i class="bi bi-check-lg me-1"></i>Accept
+        </button>
+        <button class="btn btn-outline-danger btn-sm"
+        onclick="declineRequest(${data.requestId})">
+        <i class="bi bi-x-lg"></i>
+        </button>
+        </div>`;
+        container.querySelector('.card-body, div').appendChild(div);
+        });
+
+        // ── Request accepted ──────────────────────────────────────
+        conn.on('RequestAccepted', function(data) {
+        showToast('✅ ' + data.chatWithName + ' accepted your request!');
+        setTimeout(function() {
+        window.location.href = '/Chat/With/' + data.chatWithUserId;
+        }, 1500);
+        });
+
+        // ── Request declined ──────────────────────────────────────
+        conn.on('RequestDeclined', function(data) {
+        showToast('❌ ' + data.name + ' declined your request.');
+        });
+
+        // ── Request sent confirmation ─────────────────────────────
+        conn.on('RequestSent', function(data) {
+        showToast('📨 Chat request sent!');
+        const btn = document.getElementById('req-btn-' + data.toUserId);
+        if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-clock me-1"></i>Request Sent';
+        btn.className = 'btn btn-outline-secondary btn-sm w-100';
+        }
+        });
+
+        // ── Functions ─────────────────────────────────────────────
+        function sendRequest(toUserId, name) {
+        conn.invoke('SendChatRequest', toUserId).catch(console.error);
+        }
+
+        function acceptRequest(requestId) {
+        conn.invoke('AcceptRequest', requestId).catch(console.error);
+        document.getElementById('req-' + requestId)?.remove();
+        }
+
+        function declineRequest(requestId) {
+        conn.invoke('DeclineRequest', requestId).catch(console.error);
+        document.getElementById('req-' + requestId)?.remove();
+        }
+
+        function showToast(message) {
+        document.getElementById('toast-msg').textContent = message;
+        const t = new bootstrap.Toast(document.getElementById('chat-toast'),
+        { delay: 4000 });
+        t.show();
+        }
+
+        function createRequestBox() {
+        const box = document.createElement('div');
+        box.className = 'card border-warning mb-4 p-3';
+        box.innerHTML = `
+        <h6 class="fw-bold mb-3">
+        <i class="bi bi-bell-fill text-warning me-2"></i>Pending Chat Requests
+        </h6>`;
+        document.querySelector('.container, main').prepend(box);
+        return box;
+        }
+
+        // ── Start connection ──────────────────────────────────────
+        conn.start().then(function() {
+        console.log('SignalR connected');
+        }).catch(console.error);
+    </script>
+}

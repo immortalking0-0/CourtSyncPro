@@ -34,6 +34,14 @@ namespace CourtSyncPro
             builder.Services.AddScoped<GeminiService>();
             builder.Services.AddScoped<BookingAiService>();
 
+            // Add these in the services section:
+            builder.Services.AddSignalR();
+            builder.Services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromHours(2);
+                options.Cookie.HttpOnly = true;
+            });
+
             var app = builder.Build();
 
             var pkCulture = new CultureInfo("en-PK");
@@ -58,6 +66,28 @@ namespace CourtSyncPro
                 pattern: "{controller=Home}/{action=Index}/{id?}");
 
             app.MapHub<BookingHub>("/bookingHub");    // ← ADD THIS
+                                                      // Add after app.UseRouting():
+            app.UseSession();
+
+            // Add BEFORE app.MapHub<ChatHub>("/chatHub");
+            app.Use(async (context, next) =>
+            {
+                if (context.Request.Path.StartsWithSegments("/chatHub"))
+                {
+                    var userId = context.Session.GetInt32("UserId");
+                    if (userId.HasValue)
+                    {
+                        // Add userId claim so the hub can read it
+                        var identity = new System.Security.Claims.ClaimsIdentity();
+                        identity.AddClaim(new System.Security.Claims.Claim(
+                            "UserId", userId.Value.ToString()));
+                        context.User = new System.Security.Claims.ClaimsPrincipal(identity);
+                    }
+                }
+                await next();
+            });
+
+            app.MapHub<ChatHub>("/chatHub");
 
             app.Run();
         }

@@ -1,0 +1,193 @@
+﻿@{
+    ViewData["Title"] = "Chat with " +
+        ((CourtSyncPro.Models.Entities.User)ViewBag.OtherPlayer).Name;
+    var other = (CourtSyncPro.Models.Entities.User)ViewBag.OtherPlayer;
+    var myId = (int)ViewBag.MyId;
+    var otherId = (int)ViewBag.OtherUserId;
+    var history = (List<CourtSyncPro.Models.Entities.ChatMessage>)ViewBag.History;
+}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+
+        <!-- Chat Header -->
+        <div class="card mb-0 rounded-bottom-0">
+            <div class="card-body d-flex align-items-center gap-3 py-3"
+                 style="background:linear-gradient(135deg,#1a3c5e,#2d6a9f)">
+                <a asp-controller="Players" asp-action="Index"
+                       class="btn btn-sm btn-outline-light rounded-circle"
+                       style="width:34px;height:34px;padding:0;line-height:32px;
+                    text-align:center">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+                <div class="rounded-circle d-flex align-items-center
+                    justify-content-center text-white fw-bold fs-5"
+                     style="width:44px;height:44px;min-width:44px;
+                    background:rgba(255,255,255,.20)">
+                    @other.Name[0]
+                </div>
+                <div>
+                    <div class="fw-bold text-white">@other.Name</div>
+                    <div class="d-flex align-items-center gap-1">
+                        <span class="rounded-circle bg-success"
+                              style="width:8px;height:8px;
+                        display:inline-block"
+                              id="online-dot"></span>
+                        <span class="text-white-50 small"
+                              id="online-status">Online</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages area -->
+        <div class="card rounded-0 border-top-0 border-bottom-0">
+            <div id="messages" class="p-3"
+                 style="height:450px;overflow-y:auto;background:#f8fafc">
+
+                @foreach (var msg in history)
+                {
+                    bool isMine = msg.FromUserId == myId;
+                    <div class="d-flex @(isMine ? "justify-content-end" : "") mb-2">
+                        @if (!isMine)
+                        {
+                            <div class="rounded-circle d-flex align-items-center
+                                justify-content-center text-white fw-bold me-2"
+                                 style="width:32px;height:32px;min-width:32px;
+                                background:#1a3c5e;font-size:.8rem;
+                                align-self:flex-end">
+                                @other.Name[0]
+                            </div>
+                        }
+                        <div>
+                            <div class="rounded-3 px-3 py-2"
+                                 style="max-width:320px;
+                                @(isMine ? "background:#4CAF50;color:#fff" : "background:#fff;border:1px solid #e0e0e0")">
+                                @msg.Message
+                            </div>
+                            <div class="text-muted mt-1"
+                                 style="font-size:.72rem;
+                                @(isMine ? "text-align:right" : "")">
+                                @msg.SentAt.ToString("hh:mm tt")
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                @if (!history.Any())
+                {
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-chat-dots fs-1 d-block mb-2"></i>
+                        Say hello to @other.Name!
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Message input -->
+        <div class="card rounded-top-0 border-top-0">
+            <div class="card-body py-3">
+                <div class="input-group">
+                    <input type="text" id="message-input"
+                           class="form-control rounded-start-pill border-end-0"
+                           placeholder="Type a message..."
+                           onkeypress="if(event.key==='Enter') sendMsg()" />
+                    <button class="btn btn-accent rounded-end-pill px-4"
+                            onclick="sendMsg()">
+                        <i class="bi bi-send-fill"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const myId    = @myId;
+        const otherId = @otherId;
+
+        const conn = new signalR.HubConnectionBuilder()
+        .withUrl('/chatHub')
+        .withAutomaticReconnect()
+        .build();
+
+        // ── Receive message ───────────────────────────────────────
+        conn.on('ReceiveMessage', function(data) {
+        if ((data.fromUserId === myId   && data.toUserId === otherId) ||
+        (data.fromUserId === otherId && data.toUserId === myId)) {
+        appendMessage(data);
+        }
+        });
+
+        // ── Online status updates ─────────────────────────────────
+        conn.on('UpdateOnlineUsers', function(users) {
+        const isOnline = users.some(u => u.userId === otherId);
+        document.getElementById('online-dot').style.background =
+        isOnline ? '#4CAF50' : '#9e9e9e';
+        document.getElementById('online-status').textContent =
+        isOnline ? 'Online' : 'Offline';
+        });
+
+        // ── Send message ──────────────────────────────────────────
+        function sendMsg() {
+        const input = document.getElementById('message-input');
+        const text  = input.value.trim();
+        if (!text) return;
+        conn.invoke('SendMessage', otherId, text).catch(console.error);
+        input.value = '';
+        }
+
+        // ── Append message bubble ─────────────────────────────────
+        function appendMessage(data) {
+        const isMine  = data.fromUserId === myId;
+        const box     = document.getElementById('messages');
+        const wrapper = document.createElement('div');
+        wrapper.className = 'd-flex mb-2' + (isMine ? ' justify-content-end' : '');
+
+        wrapper.innerHTML = isMine ? `
+        <div>
+        <div class="rounded-3 px-3 py-2"
+        style="max-width:320px;background:#4CAF50;color:#fff">
+        ${escHtml(data.message)}
+        </div>
+        <div class="text-muted mt-1"
+        style="font-size:.72rem;text-align:right">
+        ${data.sentAt}
+        </div>
+        </div>` : `
+        <div class="rounded-circle d-flex align-items-center justify-content-center
+        text-white fw-bold me-2"
+        style="width:32px;height:32px;min-width:32px;background:#1a3c5e;
+        font-size:.8rem;align-self:flex-end">
+        ${data.fromName[0]}
+        </div>
+        <div>
+        <div class="rounded-3 px-3 py-2"
+        style="max-width:320px;background:#fff;
+        border:1px solid #e0e0e0">
+        ${escHtml(data.message)}
+        </div>
+        <div class="text-muted mt-1" style="font-size:.72rem">
+        ${data.sentAt}
+        </div>
+        </div>`;
+
+        box.appendChild(wrapper);
+        box.scrollTop = box.scrollHeight;
+        }
+
+        function escHtml(t) {
+        return t.replace(/&/g,'&amp;').replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        // ── Start ─────────────────────────────────────────────────
+        conn.start().then(() => {
+        document.getElementById('messages').scrollTop = 999999;
+        }).catch(console.error);
+    </script>
+}
