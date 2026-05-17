@@ -26,20 +26,13 @@ namespace CourtSyncPro.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Booking booking)
         {
-            var userIdStr = HttpContext.Session.GetString("UserId");
+            var userId = HttpContext.Session.GetInt32("UserId");
             var role = HttpContext.Session.GetString("UserRole");
 
-            if (userIdStr == null || role != "User")
+            if (!userId.HasValue || role != "User")
                 return RedirectToAction("Login", "Account");
 
-            booking.UserId = int.Parse(userIdStr);
-
-            if (booking.SlotId == 0)
-            {
-                var rawSlotId = Request.Form["SlotId"].FirstOrDefault();
-                if (int.TryParse(rawSlotId, out int parsedSlotId))
-                    booking.SlotId = parsedSlotId;
-            }
+            booking.UserId = userId.Value;
 
             ModelState.Remove("UserId");
             ModelState.Remove("User");

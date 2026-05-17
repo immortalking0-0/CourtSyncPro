@@ -319,10 +319,21 @@
                                 <span class="bk-field-icon"><i class="bi bi-person-fill"></i></span>
                                 <select asp-for="UserId" id="userId">
                                     <option value="">— Select Player —</option>
-                                    @foreach (var u in (List<User>)ViewBag.Users)
-                                    {
-                                        <option value="@u.UserId">@u.Name (@u.Email)</option>
-                                    }
+                                   @{
+    var users = ViewBag.Users as List<User>;
+}
+
+@if (users != null && users.Any())
+{
+    foreach (var u in users)
+    {
+        <option value="@u.UserId">@u.Name (@u.Email)</option>
+    }
+}
+else
+{
+    <option disabled>No users available</option>
+}  
                                 </select>
                             </div>
                             <span asp-validation-for="UserId" class="bk-field-error"></span>
@@ -336,15 +347,26 @@
                                 <span class="bk-field-icon"><i class="bi bi-geo-alt-fill"></i></span>
                                 <select asp-for="CourtId" id="CourtId">
                                     <option value="">— Select Court —</option>
-                                    @foreach (var c in (List<Court>)ViewBag.Courts)
-                                    {
-                                        <option value="@c.CourtId"
-                                                data-price="@c.PricePerHour"
-                                                data-sport="@c.SportType"
-                                                data-name="@c.CourtName">
-                                            @c.CourtName (@c.SportType) — Rs.@c.PricePerHour/hr
-                                        </option>
-                                    }
+                                    @{
+    var courts = ViewBag.Courts as List<Court>;
+}
+
+@if (courts != null && courts.Any())
+{
+    foreach (var c in courts)
+    {
+        <option value="@c.CourtId"
+                data-price="@c.PricePerHour"
+                data-sport="@c.SportType"
+                data-name="@c.CourtName">
+            @c.CourtName (@c.SportType) — Rs.@c.PricePerHour/hr
+        </option>
+    }
+}
+else
+{
+    <option disabled>No courts available</option>
+}
                                 </select>
                             </div>
                             <span asp-validation-for="CourtId" class="bk-field-error"></span>
@@ -417,8 +439,12 @@
 </div>
 
 @section Scripts {
-    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js"></script>
+}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
 
     <script>

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using CourtSyncPro.Data;
 using CourtSyncPro.Models.Entities;
 using System.Collections.Concurrent;
+using System.Globalization;
 
 namespace CourtSyncPro.Hubs
 {
@@ -230,11 +231,27 @@ namespace CourtSyncPro.Hubs
         private int GetUserId()
         {
             var claim = Context.User?.FindFirst("UserId")?.Value;
-            if (int.TryParse(claim, out int id)) return id;
+            if (!string.IsNullOrWhiteSpace(claim))
+            {
+                claim = claim.Trim();
+                if (int.TryParse(claim, NumberStyles.Integer, CultureInfo.InvariantCulture, out int id))
+                    return id;
+            }
 
             // Fallback: try connection context items
-            if (Context.Items.TryGetValue("UserId", out var obj) &&
-                obj is int uid) return uid;
+            if (Context.Items.TryGetValue("UserId", out var obj))
+            {
+                switch (obj)
+                {
+                    case int uid: return uid;
+                    case long l when l <= int.MaxValue && l >= int.MinValue: return (int)l;
+                    case string s when !string.IsNullOrWhiteSpace(s):
+                        s = s.Trim();
+                        if (int.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed))
+                            return parsed;
+                        break;
+                }
+            }
 
             return 0;
         }
