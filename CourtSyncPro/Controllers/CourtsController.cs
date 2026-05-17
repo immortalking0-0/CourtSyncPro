@@ -60,26 +60,27 @@ namespace CourtSyncPro.Controllers
             return View();
         }
 
-        [HttpPost, ValidateAntiForgeryToken]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Court court)
         {
-            var ownerIdStr = HttpContext.Session.GetString("UserId");
+            var ownerId = HttpContext.Session.GetInt32("UserId");
             var role = HttpContext.Session.GetString("UserRole");
 
-            if (ownerIdStr == null || role != "Owner")
+            // Check session
+            if (!ownerId.HasValue || role != "Owner")
+            {
                 return RedirectToAction("Login", "Account");
+            }
 
-            court.OwnerId = int.Parse(ownerIdStr);
+            // Assign owner
+            court.OwnerId = ownerId.Value;
 
-            // Remove ALL navigation properties and auto-set fields from validation
-            ModelState.Remove("OwnerId");
+            // Remove validation for navigation properties
             ModelState.Remove("CourtOwner");
             ModelState.Remove("TimeSlots");
             ModelState.Remove("Bookings");
             ModelState.Remove("Reviews");
-            ModelState.Remove("CreatedAt");
-            ModelState.Remove("Rating");
-            ModelState.Remove("IsActive");
 
             if (ModelState.IsValid)
             {
@@ -88,22 +89,16 @@ namespace CourtSyncPro.Controllers
                 court.Rating = 0;
 
                 _db.Courts.Add(court);
+
                 await _db.SaveChangesAsync();
 
-                TempData["Success"] = $"{court.CourtName} has been registered successfully!";
+                TempData["Success"] = "Court created successfully!";
+
                 return RedirectToAction(nameof(Dashboard));
             }
 
-            // This will now show exactly which field is failing
-            var errors = ModelState.Values
-                                   .SelectMany(v => v.Errors)
-                                   .Select(e => e.ErrorMessage)
-                                   .ToList();
-            TempData["Error"] = "Validation failed: " + string.Join(" | ", errors);
-
             return View(court);
         }
-
         // GET: /Courts/Edit/5
         public async Task<IActionResult> Edit(int id)
         {
