@@ -20,14 +20,16 @@
 
                 <div class="mb-3">
                     <label asp-for="StartTime" class="form-label fw-semibold">Start Date & Time</label>
-                    <input asp-for="StartTime" type="datetime-local" class="form-control" />
+                    <input asp-for="StartTime" type="datetime-local" class="form-control"
+                           min="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />
                     <span asp-validation-for="StartTime" class="text-danger small"></span>
                 </div>
 
                 <div class="mb-4">
                     <label asp-for="EndTime" class="form-label fw-semibold">End Date & Time</label>
-                    <input asp-for="EndTime" type="datetime-local" class="form-control" />
-                    <span asp-validation-for="EndTime" class="text-danger small"></span>
+                    <input asp-for="EndTime" type="datetime-local" class="form-control"
+                           min="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" />         
+                           <span asp-validation-for="EndTime" class="text-danger small"></span>
                 </div>
 
                 <button type="submit" class="btn btn-accent w-100 py-2 fw-semibold">

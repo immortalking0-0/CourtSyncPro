@@ -4,6 +4,7 @@ using CourtSyncPro.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;                   // ← ADD
 using Microsoft.EntityFrameworkCore;
+using QRCoder;
 
 namespace CourtSyncPro.Controllers
 {
@@ -98,6 +99,12 @@ namespace CourtSyncPro.Controllers
                 _db.Bookings.Add(booking);
                 await _db.SaveChangesAsync();
 
+                // generate real QR code image
+                var qrBase64 = GenerateQRCodeBase64(booking.QRCode);
+                TempData["QRCode"] = qrBase64;
+                TempData["Success"] = $"Booking confirmed! Your QR Code: {booking.QRCode}";
+                return RedirectToAction(nameof(Details), new { id = booking.BookingId });
+
                 // ── Broadcast to ALL connected browsers ───────────
                 string slotLabel = $"{slot.StartTime:dd MMM HH:mm} → {slot.EndTime:HH:mm}";
 
@@ -153,11 +160,24 @@ namespace CourtSyncPro.Controllers
         // GET: /Bookings
         public async Task<IActionResult> Index()
         {
-            var bookings = await _db.Bookings
+            await ExpireOldSlots();
+            var userId = HttpContext.Session.GetInt32("UserId");
+            var role = HttpContext.Session.GetString("UserRole");
+
+            if (userId == null)
+                return RedirectToAction("Login", "Account");
+
+            IQueryable<Booking> query = _db.Bookings
                 .Include(b => b.User)
                 .Include(b => b.Court)
                 .Include(b => b.TimeSlot)
-                .Include(b => b.Payment)
+                .Include(b => b.Payment);
+
+            // Admin sees all, players only see their own
+            if (role != "Admin")
+                query = query.Where(b => b.UserId == userId.Value);
+
+            var bookings = await query
                 .OrderByDescending(b => b.BookingDate)
                 .ToListAsync();
 
@@ -175,12 +195,31 @@ namespace CourtSyncPro.Controllers
                 .FirstOrDefaultAsync(b => b.BookingId == id);
 
             if (booking == null) return NotFound();
+
+            // ✅ encode full booking info into QR code
+            var qrText = $@"CourtSync Pro Booking
+====================
+Booking ID  : {booking.BookingId}
+Player      : {booking.User.Name}
+Court       : {booking.Court.CourtName}
+Sport       : {booking.Court.SportType}
+Date        : {booking.TimeSlot.StartTime:dd MMM yyyy}
+Time        : {booking.TimeSlot.StartTime:hh:mm tt} - {booking.TimeSlot.EndTime:hh:mm tt}
+Amount      : Rs.{booking.TotalAmount}
+Status      : {booking.Status}
+QR Code     : {booking.QRCode}
+====================
+Show this at the venue for check-in.";
+
+            ViewBag.QRCodeImage = GenerateQRCodeBase64(qrText);
+
             return View(booking);
         }
 
         // GET: /Bookings/Create
         public async Task<IActionResult> Create()
         {
+            await ExpireOldSlots();
             await PopulateCreateViewBag();
             return View();
         }
@@ -241,17 +280,84 @@ namespace CourtSyncPro.Controllers
         // ── Helper to repopulate dropdowns ──────────────────────
         private async Task PopulateCreateViewBag()
         {
-            ViewBag.Users = await _db.Users.ToListAsync();
             ViewBag.Courts = await _db.Courts.Where(c => c.IsActive).ToListAsync();
             ViewBag.Slots = await _db.TimeSlots
                 .Where(ts => !ts.IsBlocked &&
+                    ts.StartTime > DateTime.Now &&
                     !_db.Bookings.Any(b =>
                         b.SlotId == ts.SlotId &&
-                        b.Status != BookingStatus.Cancelled
-                    )
-                )
-                .Include(ts => ts.Court)
+                        b.Status != BookingStatus.Cancelled))
+                .Include(ts => ts.Court)   // ← must include Court
                 .ToListAsync();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateFromAI([FromBody] AiBookingRequest request)
+        {
+            var userId = HttpContext.Session.GetInt32("UserId");
+            if (userId == null)
+                return Json(new { message = "Please log in to book a court." });
+
+            var slot = await _db.TimeSlots
+                .Include(s => s.Court)
+                .FirstOrDefaultAsync(s => s.SlotId == request.SlotId
+                                       && s.IsAvailable
+                                       && !s.IsBlocked);
+
+            if (slot == null)
+                return Json(new { message = "Sorry, that slot is no longer available." });
+
+            var hours = (decimal)(slot.EndTime - slot.StartTime).TotalHours;
+            var total = slot.Court.PricePerHour * hours;
+
+            var booking = new Booking
+            {
+                UserId = userId.Value,
+                CourtId = slot.CourtId,
+                SlotId = slot.SlotId,
+                TotalAmount = total,
+                Status = BookingStatus.Pending,
+                BookingDate = DateTime.UtcNow,
+                QRCode = Guid.NewGuid().ToString("N")[..12].ToUpper()
+            };
+
+            slot.IsAvailable = false;
+
+            _db.Bookings.Add(booking);
+            await _db.SaveChangesAsync();
+
+            return Json(new
+            {
+                message = $"✅ Booking confirmed for {slot.Court.CourtName} at {slot.StartTime:hh:mm tt} on {slot.StartTime:dd MMM yyyy}! Your QR code is {booking.QRCode}. Please complete payment to confirm your slot.",
+                bookingId = booking.BookingId
+            });
+        }
+
+        private async Task ExpireOldSlots()
+        {
+            var expiredSlots = await _db.TimeSlots
+                .Where(s => s.StartTime < DateTime.Now && s.IsAvailable)
+                .ToListAsync();
+
+            foreach (var slot in expiredSlots)
+                slot.IsAvailable = false;
+
+            if (expiredSlots.Any())
+                await _db.SaveChangesAsync();
+        }
+
+        private string GenerateQRCodeBase64(string text)
+        {
+            using var qrGenerator = new QRCodeGenerator();
+            using var qrData = qrGenerator.CreateQrCode(text, QRCodeGenerator.ECCLevel.Q);
+            using var qrCode = new PngByteQRCode(qrData);
+            var bytes = qrCode.GetGraphic(10);
+            return Convert.ToBase64String(bytes);
+        }
+
+        public class AiBookingRequest
+        {
+            public int SlotId { get; set; }
         }
     }
 }

@@ -54,25 +54,28 @@ namespace CourtSyncPro.Controllers
             if (court == null || court.OwnerId != ownerId.Value)
                 return Forbid();
 
+            if (slot.StartTime <= DateTime.Now)
+                ModelState.AddModelError("StartTime", "Start time cannot be in the past.");
+
+            if (slot.EndTime <= DateTime.Now)
+                ModelState.AddModelError("EndTime", "End time cannot be in the past.");
+
+            if (slot.EndTime <= slot.StartTime)
+                ModelState.AddModelError("EndTime", "End time must be after start time.");
+
             if (ModelState.IsValid)
             {
                 slot.IsAvailable = true;
                 slot.IsBlocked = false;
 
                 _db.TimeSlots.Add(slot);
-
                 await _db.SaveChangesAsync();
 
-                TempData["Success"] =
-                    $"Time slot added successfully!";
-
-                return RedirectToAction(
-                    "ManageSlots",
-                    new { courtId = slot.CourtId });
+                TempData["Success"] = "Time slot added successfully!";
+                return RedirectToAction("ManageSlots", new { courtId = slot.CourtId });
             }
 
             ViewBag.Court = court;
-
             return View(slot);
         }
 

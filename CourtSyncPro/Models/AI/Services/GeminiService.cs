@@ -1,8 +1,10 @@
-﻿namespace CourtSyncPro.Models.AI.Services
-{
-    using System.Net.Http.Json;
+﻿using System.Text;
+using System.Text.Json;
+using Microsoft.Extensions.Configuration;
 
-    public class GeminiService
+namespace CourtSyncPro.Models.AI.Services
+{
+    public class GeminiService   // keeping same class name so nothing else breaks
     {
         private readonly HttpClient _http;
         private readonly IConfiguration _config;
@@ -15,43 +17,63 @@
 
         public async Task<string> AskAsync(string prompt)
         {
-            var apiKey = _config["Gemini:ApiKey"];
-            var model = _config["Gemini:Model"];
+            var apiKey = _config["Groq:ApiKey"];
+            var model = _config["Groq:Model"] ?? "llama-3.3-70b-versatile";
 
-            var request = new GeminiRequest
+            if (string.IsNullOrWhiteSpace(apiKey))
+                return "Error: Groq API key is missing from appsettings.json.";
+
+            var url = "https://api.groq.com/openai/v1/chat/completions";
+
+            var body = new
             {
-                contents = new List<Content>
-        {
-            new Content
-            {
-                parts = new List<Part>
+                model = model,
+                messages = new[]
                 {
-                    new Part { text = prompt }
-                }
-            }
-        }
+                    new { role = "user", content = prompt }
+                },
+                max_tokens = 1024
             };
 
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={apiKey}";
+            var json = JsonSerializer.Serialize(body);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await _http.PostAsJsonAsync(url, request);
+            _http.DefaultRequestHeaders.Clear();
+            _http.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
 
-            // ✅ Handle quota exceeded gracefully
-            if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+            HttpResponseMessage response;
+            try
             {
-                return "AI is currently busy. Please wait a moment and try again.";
+                response = await _http.PostAsync(url, content);
             }
+            catch (Exception ex)
+            {
+                return $"Network Error: {ex.Message}";
+            }
+
+            var rawJson = await response.Content.ReadAsStringAsync();
+
+            if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+                return "AI is busy. Please wait a moment and try again.";
 
             if (!response.IsSuccessStatusCode)
+                return $"Groq Error [{response.StatusCode}]: {rawJson}";
+
+            try
             {
-                var error = await response.Content.ReadAsStringAsync();
-                throw new Exception($"Gemini API Error: {error}");
+                using var doc = JsonDocument.Parse(rawJson);
+                var text = doc.RootElement
+                    .GetProperty("choices")[0]
+                    .GetProperty("message")
+                    .GetProperty("content")
+                    .GetString();
+
+                return text ?? "AI returned an empty response.";
             }
-
-            var result = await response.Content.ReadFromJsonAsync<GeminiResponse>();
-
-            return result?.candidates?.FirstOrDefault()?.content?.parts?.FirstOrDefault()?.text
-                   ?? "No response from AI.";
+            catch
+            {
+                return $"Error parsing response: {rawJson}";
+            }
         }
     }
 }

@@ -189,8 +189,12 @@
                     }
 
                     <li class="nav-item">
-                        <a class="nav-link" asp-controller="Ai" asp-action="Index">🤖 AI</a>
-                    </li>
+                        @if (sessionRole == "User")
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Ai" asp-action="Index">🤖 AI</a>
+                            </li>
+                        }
 
                     <li><div class="nav-divider"></div></li>
 

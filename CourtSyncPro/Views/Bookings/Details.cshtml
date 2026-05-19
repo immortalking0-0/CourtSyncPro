@@ -356,21 +356,22 @@
         </div>
 
         <!-- QR Section -->
-        <div class="bd-qr">
-            <div class="qr-label" style="width:100%;">Show at venue</div>
-            <div class="qr-box">
-                <div class="qr-corner tl"></div>
-                <div class="qr-corner tr"></div>
-                <div class="qr-corner bl"></div>
-                <div class="qr-corner br"></div>
-                <!-- decorative QR grid -->
-                <div class="qr-grid" id="qrGrid"></div>
-                <div class="qr-code-text">@Model.QRCode</div>
-                <div class="qr-hint">
-                    <i class="bi bi-qr-code"></i> Present this code at the court entrance
-                </div>
-            </div>
+        @if (ViewBag.QRCodeImage != null)
+{
+    <div class="bd-qr">
+        <div class="qr-label">Venue Check-in QR Code</div>
+        <div style="background:white; padding:12px; border-radius:16px; 
+                    border:4px solid var(--border); animation: qrPulse 2.5s ease-in-out 1s 3;">
+            <img src="data:image/png;base64,@ViewBag.QRCodeImage"
+                 alt="QR Code" width="180" height="180" />
         </div>
+        <p class="text-muted small mt-3">
+            <i class="bi bi-phone me-1"></i>
+            Scan this at the venue for check-in
+        </p>
+        <p class="qr-code-text mt-1" style="color:var(--primary);">@Model.QRCode</p>
+    </div>
+}
 
         <!-- Actions -->
         <div class="bd-actions">

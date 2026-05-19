@@ -302,43 +302,34 @@
             </div>
         </div>
 
-        <!-- Form Body -->
-        <div class="bk-card-body">
-            <form asp-action="Create" method="post" id="bookingForm">
-                @Html.AntiForgeryToken()
-                <div asp-validation-summary="ModelOnly" class="alert alert-danger small mb-3"></div>
-
-                <!-- Who & Where -->
-                <div class="field-section-label">Who &amp; Where</div>
-
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <div class="bk-field">
-                            <label asp-for="UserId" class="form-label">Player</label>
-                            <div class="bk-select-wrap">
-                                <span class="bk-field-icon"><i class="bi bi-person-fill"></i></span>
-                                <select asp-for="UserId" id="userId">
-                                    <option value="">— Select Player —</option>
-                                   @{
-    var users = ViewBag.Users as List<User>;
-}
-
-@if (users != null && users.Any())
-{
-    foreach (var u in users)
-    {
-        <option value="@u.UserId">@u.Name (@u.Email)</option>
+       <!-- Form Body -->
+<div class="bk-card-body">
+    @{
+        var loggedInName = Context.Session.GetString("UserName");
+        var loggedInId   = Context.Session.GetInt32("UserId");
     }
-}
-else
-{
-    <option disabled>No users available</option>
-}  
-                                </select>
-                            </div>
-                            <span asp-validation-for="UserId" class="bk-field-error"></span>
-                        </div>
-                    </div>
+    <form asp-action="Create" method="post" id="bookingForm">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger small mb-3"></div>
+
+        <!-- Who & Where -->
+        <div class="field-section-label">Who &amp; Where</div>
+
+        <div class="row g-3">
+        <div class="col-md-6">
+            <div class="bk-field">
+                <label class="form-label">Player</label>
+                <div class="bk-select-wrap">
+                    <span class="bk-field-icon"><i class="bi bi-person-fill"></i></span>
+                    <input type="text" class="form-control"
+                           value="@loggedInName"
+                           readonly disabled />
+                </div>
+                <input type="hidden" asp-for="UserId" value="@loggedInId" />
+            </div>
+        </div>
+        
+
 
                     <div class="col-md-6">
                         <div class="bk-field">
@@ -450,8 +441,8 @@ else
     <script>
         // ── Your existing slot/chip logic (unchanged) ─────────────
         const allSlots = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(
-            ((List<CourtSyncPro.Models.Entities.TimeSlot>)ViewBag.Slots)
-            .Select(s => new {
+    ((List<CourtSyncPro.Models.Entities.TimeSlot>)(ViewBag.Slots ?? new List<CourtSyncPro.Models.Entities.TimeSlot>()))
+    .Select(s => new {
                 slotId    = s.SlotId,
                 courtId   = s.CourtId,
                 courtName = s.Court.CourtName,

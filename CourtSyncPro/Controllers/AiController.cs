@@ -1,42 +1,58 @@
-﻿// ✅ Make sure your controller has this
-using CourtSyncPro.Models.AI.Services;
+﻿using CourtSyncPro.Models.AI.Services;
 using Microsoft.AspNetCore.Mvc;
 
-[Route("ai")]                          // ← matches /ai/...
+[Route("ai")]
 public class AiController : Controller
 {
-    private readonly GeminiService _gemini;
+    // ✅ removed _gemini — controller no longer calls GeminiService directly
     private readonly BookingAiService _bookingAi;
 
-    public AiController(GeminiService gemini, BookingAiService bookingAi)
+    public AiController(BookingAiService bookingAi)
     {
-        _gemini = gemini;
         _bookingAi = bookingAi;
     }
 
-    [HttpGet("")]                      // ← matches GET /ai
+    [HttpGet("")]
     public IActionResult Index()
     {
+        var role = HttpContext.Session.GetString("UserRole");
+        if (role != "User")
+            return RedirectToAction("Index", "Home");
+
         return View();
     }
 
-    [HttpPost("ask")]                  // ← matches POST /ai/ask
+    [HttpPost("ask")]
     public async Task<IActionResult> Ask(string prompt)
     {
         if (string.IsNullOrWhiteSpace(prompt))
             return BadRequest("Prompt is required.");
 
-        var response = await _gemini.AskAsync(prompt);
-        return Json(new { reply = response });
+        try
+        {
+            var response = await _bookingAi.SuggestBookingAsync(prompt);
+            return Json(new { reply = response });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { reply = $"Error: {ex.Message}" });
+        }
     }
 
-    [HttpPost("suggest-booking")]      // ← matches POST /ai/suggest-booking
+    [HttpPost("suggest-booking")]
     public async Task<IActionResult> SuggestBooking(string userInput)
     {
         if (string.IsNullOrWhiteSpace(userInput))
             return BadRequest("User input is required.");
 
-        var suggestion = await _bookingAi.SuggestBookingAsync(userInput);
-        return Json(new { reply = suggestion });
+        try
+        {
+            var suggestion = await _bookingAi.SuggestBookingAsync(userInput);
+            return Json(new { reply = suggestion });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { reply = $"Error: {ex.Message}" });
+        }
     }
 }

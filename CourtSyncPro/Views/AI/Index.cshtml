@@ -7,11 +7,18 @@
 
     <div class="card p-4">
         <textarea id="userInput" class="form-control" rows="3"
-                  placeholder="e.g. Book a court for tomorrow evening..."></textarea>
-
+                  placeholder="e.g. Book a futsal court for tomorrow evening..."></textarea>
         <button class="btn btn-primary mt-3" onclick="getSuggestion()">
             Get Suggestion
         </button>
+
+        <!-- Quick ask buttons -->
+        <div class="mt-3 d-flex flex-wrap gap-2">
+            <button class="btn btn-outline-secondary btn-sm" onclick="quickAsk('Show all available courts')">All Courts</button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="quickAsk('Show available futsal slots')">Futsal Slots</button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="quickAsk('Show available badminton slots')">Badminton Slots</button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="quickAsk('Which is the cheapest court?')">Cheapest Court</button>
+        </div>
     </div>
 
     <!-- Loading spinner -->
@@ -23,11 +30,33 @@
     <div id="replyBox" class="card p-4 mt-3" style="display:none;">
         <h5>AI Suggestion:</h5>
         <p id="replyText"></p>
+
+        <!-- Confirm booking button — only shown when AI detects booking intent -->
+        <div id="confirmSection" style="display:none;">
+            <hr />
+            <p class="text-muted mb-2">Click below to confirm your booking:</p>
+            <button class="btn btn-success" onclick="confirmBooking()">
+                ✅ Yes, Confirm Booking
+            </button>
+            <button class="btn btn-outline-danger ms-2" onclick="cancelBooking()">
+                ❌ Cancel
+            </button>
+        </div>
+
+        <!-- Booking result message -->
+        <div id="bookingResult" class="mt-3" style="display:none;"></div>
     </div>
 </div>
 
 @section Scripts {
     <script>
+        let pendingSlotId = null; // stores slotId when AI detects booking intent
+
+        function quickAsk(text) {
+            document.getElementById('userInput').value = text;
+            getSuggestion();
+        }
+
         async function getSuggestion() {
             const userInput = document.getElementById('userInput').value.trim();
 
@@ -36,21 +65,37 @@
                 return;
             }
 
-            // Show loading, hide old reply
+            // reset state
+            pendingSlotId = null;
+            document.getElementById('confirmSection').style.display = 'none';
+            document.getElementById('bookingResult').style.display = 'none';
             document.getElementById('loading').style.display = 'block';
             document.getElementById('replyBox').style.display = 'none';
 
             try {
-                const res = await fetch('/ai/suggest-booking', {
+                const res = await fetch('/ai/ask', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `userInput=${encodeURIComponent(userInput)}`
+                    body: `prompt=${encodeURIComponent(userInput)}`
                 });
 
                 const data = await res.json();
+                const reply = data.reply;
 
-                // Show reply
-                document.getElementById('replyText').innerText = data.reply;
+                // ✅ check if AI returned a booking intent
+                if (reply.startsWith('BOOKING_INTENT:')) {
+                    const parts = reply.split(':');
+                    pendingSlotId = parts[1];                    // extract slotId
+                    const message = parts.slice(2).join(':');    // extract message
+
+                    document.getElementById('replyText').innerText = message;
+                    document.getElementById('confirmSection').style.display = 'block';
+                } else {
+                    // normal info response
+                    document.getElementById('replyText').innerText = reply;
+                    document.getElementById('confirmSection').style.display = 'none';
+                }
+
                 document.getElementById('replyBox').style.display = 'block';
 
             } catch (err) {
@@ -58,6 +103,43 @@
             } finally {
                 document.getElementById('loading').style.display = 'none';
             }
+        }
+
+        async function confirmBooking() {
+            if (!pendingSlotId) return;
+
+            document.getElementById('confirmSection').style.display = 'none';
+
+            const resultBox = document.getElementById('bookingResult');
+            resultBox.style.display = 'block';
+            resultBox.innerHTML = '<span class="text-muted">⏳ Creating your booking...</span>';
+
+            try {
+                const res = await fetch('/Bookings/CreateFromAI', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ slotId: parseInt(pendingSlotId) })
+                });
+
+                const data = await res.json();
+
+                resultBox.innerHTML = `
+                    <div class="alert alert-success">
+                        ${data.message}
+                        ${data.bookingId ? `<br><a href="/Bookings" class="btn btn-sm btn-outline-success mt-2">View My Bookings</a>` : ''}                   
+                    </div>`;
+
+                pendingSlotId = null;
+
+            } catch (err) {
+                resultBox.innerHTML = '<div class="alert alert-danger">Something went wrong. Please try again.</div>';
+            }
+        }
+
+        function cancelBooking() {
+            pendingSlotId = null;
+            document.getElementById('confirmSection').style.display = 'none';
+            document.getElementById('replyText').innerText = 'Booking cancelled. How else can I help you?';
         }
     </script>
 }

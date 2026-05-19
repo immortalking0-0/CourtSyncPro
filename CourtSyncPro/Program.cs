@@ -46,7 +46,6 @@ namespace CourtSyncPro
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddHttpClient<GeminiService>();
 
-            builder.Services.AddScoped<GeminiService>();
             builder.Services.AddScoped<BookingAiService>();
 
             var app = builder.Build();
