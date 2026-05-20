@@ -17,219 +17,317 @@
         grid-template-columns: 1fr 1.6fr;
         max-width: 960px;
         width: 100%;
-        border-radius: 20px;
+        border-radius: 24px;
         overflow: hidden;
-        box-shadow: 0 20px 60px rgba(13,59,46,.18);
-        animation: fadeUp .5s ease both;
+        border: 1px solid var(--border);
+        box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+        animation: pageFadeIn 0.5s ease both;
     }
 
-    /* LEFT PANEL */
+    /* ── LEFT PANEL ── */
     .reg-left {
-        background: var(--primary);
+        background:
+            linear-gradient(160deg, rgba(183,255,61,0.07) 0%, transparent 60%),
+            rgba(255,255,255,0.03);
+        backdrop-filter: var(--blur);
         padding: 3rem 2rem;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+        border-right: 1px solid var(--border);
         position: relative;
         overflow: hidden;
     }
+
     .reg-left::before {
         content: '';
         position: absolute;
-        top: -60px; right: -60px;
-        width: 200px; height: 200px;
+        top: -80px; right: -80px;
+        width: 260px; height: 260px;
         border-radius: 50%;
-        background: rgba(168,230,61,.07);
+        background: radial-gradient(circle, rgba(183,255,61,0.1) 0%, transparent 70%);
+        pointer-events: none;
     }
+
     .reg-left::after {
         content: '';
         position: absolute;
-        bottom: -50px; left: -40px;
-        width: 160px; height: 160px;
+        bottom: -60px; left: -60px;
+        width: 200px; height: 200px;
         border-radius: 50%;
-        background: rgba(168,230,61,.05);
+        background: radial-gradient(circle, rgba(0,229,160,0.07) 0%, transparent 70%);
+        pointer-events: none;
     }
 
     .reg-left-brand {
-        display: flex; align-items: center; gap: 10px;
-        font-family: 'Syne', sans-serif;
-        font-weight: 800; font-size: 1.1rem;
-        color: var(--accent);
-        position: relative; z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 900;
+        font-size: 1rem;
+        color: var(--green);
+        position: relative;
+        z-index: 1;
+        letter-spacing: 0.04em;
     }
-    .reg-left-brand-icon {
-        width: 34px; height: 34px;
-        background: var(--accent);
-        border-radius: 9px;
-        display: flex; align-items: center; justify-content: center;
-    }
-    .reg-left-brand-icon i { color: var(--primary); font-size: .95rem; }
 
-    .reg-left-body { position: relative; z-index: 1; }
-    .reg-left-body h2 {
-        font-family: 'Syne', sans-serif;
-        font-size: 1.7rem; font-weight: 800;
-        color: #fff; line-height: 1.2;
-        letter-spacing: -.03em;
-        margin-bottom: .75rem;
+    .reg-brand-icon {
+        width: 36px; height: 36px;
+        background: var(--green-dim);
+        border: 1px solid var(--border-hi);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--green);
+        font-size: 1rem;
     }
-    .reg-left-body h2 span { color: var(--accent); }
+
+    .reg-left-body {
+        position: relative;
+        z-index: 1;
+    }
+
+    .reg-left-body h2 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.7rem;
+        font-weight: 900;
+        color: var(--text);
+        line-height: 1.2;
+        letter-spacing: -0.03em;
+        margin-bottom: 0.75rem;
+    }
+
+    .reg-left-body h2 span { color: var(--green); }
+
     .reg-left-body p {
-        color: rgba(255,255,255,.5);
-        font-size: .85rem; line-height: 1.65;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        line-height: 1.65;
         margin: 0;
     }
 
+    /* Steps */
     .reg-steps {
-        position: relative; z-index: 1;
-        display: flex; flex-direction: column; gap: 0;
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
     }
+
     .reg-step {
-        display: flex; gap: 12px;
+        display: flex;
+        gap: 12px;
         padding-bottom: 20px;
         position: relative;
     }
+
     .reg-step:not(:last-child)::before {
         content: '';
         position: absolute;
         left: 13px; top: 28px;
-        width: 1px; height: calc(100% - 14px);
-        background: rgba(168,230,61,.2);
-    }
-    .reg-step-num {
-        width: 28px; height: 28px; flex-shrink: 0;
-        background: rgba(168,230,61,.12);
-        border: 1px solid rgba(168,230,61,.28);
-        border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        font-family: 'Syne', sans-serif;
-        font-size: .72rem; font-weight: 800;
-        color: var(--accent);
-    }
-    .reg-step-text strong {
-        display: block;
-        color: rgba(255,255,255,.85);
-        font-size: .85rem; font-weight: 600;
-        line-height: 1.3;
-    }
-    .reg-step-text span {
-        color: rgba(255,255,255,.4);
-        font-size: .78rem;
+        width: 1px;
+        height: calc(100% - 14px);
+        background: rgba(183,255,61,0.2);
     }
 
-    /* RIGHT PANEL */
+    .reg-step-num {
+        width: 28px; height: 28px;
+        flex-shrink: 0;
+        background: var(--green-dim);
+        border: 1px solid var(--border-hi);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.7rem;
+        font-weight: 800;
+        color: var(--green);
+    }
+
+    .reg-step-text strong {
+        display: block;
+        color: var(--text);
+        font-size: 0.83rem;
+        font-weight: 600;
+        line-height: 1.3;
+    }
+
+    .reg-step-text span {
+        color: var(--text-faint);
+        font-size: 0.76rem;
+    }
+
+    /* ── RIGHT PANEL ── */
     .reg-right {
-        background: #fff;
-        padding: 2.5rem 2.5rem;
+        background: rgba(255,255,255,0.04);
+        backdrop-filter: var(--blur);
+        padding: 2.5rem;
         overflow-y: auto;
         max-height: 90vh;
     }
+
     .reg-right::-webkit-scrollbar { width: 4px; }
-    .reg-right::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .reg-right::-webkit-scrollbar-thumb {
+        background: var(--surface-hi);
+        border-radius: 2px;
+    }
 
     .reg-right h3 {
-        font-family: 'Syne', sans-serif;
-        font-weight: 800; font-size: 1.4rem;
-        color: var(--primary);
-        letter-spacing: -.02em;
-        margin-bottom: .25rem;
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 700;
+        font-size: 1.35rem;
+        color: var(--text);
+        letter-spacing: -0.02em;
+        margin-bottom: 0.25rem;
     }
-    .reg-right .sub {
-        color: var(--text-faint); font-size: .83rem;
-        margin-bottom: 1.75rem;
+
+    .reg-sub {
+        color: var(--text-faint);
+        font-size: 0.82rem;
+        margin-bottom: 1.5rem;
     }
 
     /* Section label */
     .form-section-label {
-        font-size: .7rem;
+        font-size: 0.68rem;
         font-weight: 700;
-        letter-spacing: .08em;
+        letter-spacing: 0.1em;
         text-transform: uppercase;
         color: var(--text-faint);
-        margin: 1.25rem 0 .75rem;
-        display: flex; align-items: center; gap: 8px;
+        margin: 1.25rem 0 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
+
     .form-section-label::after {
         content: '';
-        flex: 1; height: 1px;
+        flex: 1;
+        height: 1px;
         background: var(--border);
     }
 
     /* Input fields */
     .input-field { margin-bottom: 1rem; }
-    .input-field label {
-        display: block; font-size: .78rem; font-weight: 600;
-        color: var(--text-muted); margin-bottom: 4px;
-        text-transform: uppercase; letter-spacing: .04em;
-    }
-    .input-field .field-wrap { position: relative; }
-    .input-field .field-icon {
-        position: absolute; left: 12px; top: 50%;
-        transform: translateY(-50%);
-        color: var(--text-faint); font-size: .9rem;
-        pointer-events: none; transition: color .2s;
-    }
-    .input-field input.form-control {
-        padding-left: 36px;
-        border: 1.5px solid var(--border);
-        border-radius: 10px;
-        font-size: .88rem; height: 42px;
-        transition: border-color .2s, box-shadow .2s;
-    }
-    .input-field input.form-control:focus {
-        border-color: var(--accent);
-        box-shadow: 0 0 0 3px rgba(168,230,61,.18);
-        outline: none;
-    }
-    .input-field .field-wrap:focus-within .field-icon { color: var(--primary); }
 
-    /* Hint text */
-    .field-hint {
-        font-size: .74rem; color: var(--text-faint);
-        margin-top: 4px; display: flex; align-items: center; gap: 4px;
+    .input-field > label {
+        display: block;
+        font-size: 0.73rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        margin-bottom: 5px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
     }
-    .field-hint i { font-size: .75rem; }
+
+    .field-wrap { position: relative; }
+
+    .field-icon {
+        position: absolute;
+        left: 12px; top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-faint);
+        font-size: 0.88rem;
+        pointer-events: none;
+        transition: color var(--transition);
+        z-index: 2;
+    }
+
+    .field-wrap:focus-within .field-icon {
+        color: var(--green);
+    }
+
+    .field-wrap input.form-control {
+        padding-left: 36px !important;
+        height: 44px;
+        font-size: 0.86rem !important;
+    }
+
+    .field-hint {
+        font-size: 0.73rem;
+        color: var(--text-faint);
+        margin-top: 5px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
 
     /* Pending notice */
     .pending-notice {
-        background: #fffbeb;
-        border: 1.5px solid #f4d03f;
-        border-radius: 10px;
+        background: rgba(255,196,0,0.06);
+        border: 1px solid rgba(255,196,0,0.25);
+        border-radius: 12px;
         padding: 12px 14px;
-        display: flex; gap: 10px; align-items: flex-start;
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
         margin: 1.25rem 0;
     }
-    .pending-notice i { color: #d4ac0d; font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
-    .pending-notice p { margin: 0; font-size: .8rem; color: #7a6010; line-height: 1.5; }
-    .pending-notice strong { color: #5a4608; }
+
+    .pending-notice i {
+        color: #ffc400;
+        font-size: 1rem;
+        flex-shrink: 0;
+        margin-top: 1px;
+    }
+
+    .pending-notice p {
+        margin: 0;
+        font-size: 0.79rem;
+        color: rgba(232,237,245,0.65);
+        line-height: 1.55;
+    }
+
+    .pending-notice strong { color: #ffc400; }
 
     /* Submit */
     .btn-register {
-        width: 100%; height: 46px;
-        background: var(--primary);
-        color: #fff; border: none;
-        border-radius: 10px;
-        font-family: 'Syne', sans-serif;
-        font-weight: 700; font-size: .92rem;
+        width: 100%;
+        height: 48px;
+        background: var(--green);
+        color: var(--bg);
+        border: none;
+        border-radius: var(--radius-sm);
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 700;
+        font-size: 0.85rem;
+        letter-spacing: 0.04em;
         cursor: pointer;
-        transition: background .2s, transform .2s, box-shadow .2s;
-        display: flex; align-items: center; justify-content: center; gap: 8px;
+        transition: all var(--transition);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0 4px 20px rgba(183,255,61,0.2);
     }
+
     .btn-register:hover {
-        background: var(--primary-mid);
+        background: #ceff5a;
+        box-shadow: 0 0 28px rgba(183,255,61,0.35);
         transform: translateY(-1px);
-        box-shadow: 0 6px 20px rgba(13,59,46,.25);
     }
+
     .btn-register:active { transform: translateY(0); }
 
     .reg-footer-links {
-        text-align: center; font-size: .8rem;
-        color: var(--text-faint); margin-top: 1rem;
+        text-align: center;
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin-top: 1rem;
     }
+
     .reg-footer-links a {
-        font-weight: 600; text-decoration: none; color: var(--primary);
+        font-weight: 600;
+        text-decoration: none;
+        color: var(--green);
+        transition: color var(--transition);
     }
-    .reg-footer-links a:hover { opacity: .75; }
+
+    .reg-footer-links a:hover { color: #ceff5a; }
 
     @@media (max-width: 640px) {
         .reg-shell { grid-template-columns: 1fr; }
@@ -241,13 +339,13 @@
 <div class="reg-wrapper">
     <div class="reg-shell">
 
-        <!-- LEFT panel -->
+        <!-- LEFT PANEL -->
         <div class="reg-left">
             <div class="reg-left-brand">
-                <div class="reg-left-brand-icon">
+                <div class="reg-brand-icon">
                     <i class="bi bi-trophy-fill"></i>
                 </div>
-                CourtSync Pro
+                COURTSYNC PRO
             </div>
 
             <div class="reg-left-body">
@@ -280,108 +378,124 @@
             </div>
         </div>
 
-        <!-- RIGHT panel: form -->
+        <!-- RIGHT PANEL -->
         <div class="reg-right">
             <h3>Register your venue</h3>
-            <p class="sub">All fields are required for verification.</p>
+            <p class="reg-sub">All fields are required for verification.</p>
 
             <form asp-action="RegisterOwner" method="post" novalidate>
                 @Html.AntiForgeryToken()
 
-                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 small mb-3"></div>
+                <div asp-validation-summary="ModelOnly"
+                     class="alert alert-danger py-2 small mb-3"></div>
 
-                <!-- Venue info -->
-                <div class="form-section-label">Venue details</div>
+                <!-- Venue Info -->
+                <div class="form-section-label">Venue Details</div>
 
                 <div class="input-field">
-                    <label asp-for="BusinessName">Business / Venue name</label>
+                    <label asp-for="BusinessName">Business / Venue Name</label>
                     <div class="field-wrap">
-                        <input asp-for="BusinessName" class="form-control" placeholder="e.g. Champions Arena" autofocus />
                         <i class="bi bi-building field-icon"></i>
+                        <input asp-for="BusinessName" class="form-control"
+                               placeholder="e.g. Champions Arena" autofocus />
                     </div>
-                    <span asp-validation-for="BusinessName" class="text-danger" style="font-size:.76rem;"></span>
+                    <span asp-validation-for="BusinessName"
+                          class="text-danger" style="font-size:.74rem;"></span>
                 </div>
 
                 <div class="row g-2">
                     <div class="col-7">
                         <div class="input-field mb-0">
-                            <label asp-for="Email">Business email</label>
+                            <label asp-for="Email">Business Email</label>
                             <div class="field-wrap">
-                                <input asp-for="Email" class="form-control" placeholder="owner@venue.com" />
                                 <i class="bi bi-envelope field-icon"></i>
+                                <input asp-for="Email" class="form-control"
+                                       placeholder="owner@venue.com" />
                             </div>
-                            <span asp-validation-for="Email" class="text-danger" style="font-size:.76rem;"></span>
+                            <span asp-validation-for="Email"
+                                  class="text-danger" style="font-size:.74rem;"></span>
                         </div>
                     </div>
                     <div class="col-5">
                         <div class="input-field mb-0">
                             <label asp-for="City">City</label>
                             <div class="field-wrap">
-                                <input asp-for="City" class="form-control" placeholder="e.g. Lahore" />
                                 <i class="bi bi-geo-alt field-icon"></i>
+                                <input asp-for="City" class="form-control"
+                                       placeholder="e.g. Lahore" />
                             </div>
-                            <span asp-validation-for="City" class="text-danger" style="font-size:.76rem;"></span>
+                            <span asp-validation-for="City"
+                                  class="text-danger" style="font-size:.74rem;"></span>
                         </div>
                     </div>
                 </div>
 
                 <div class="input-field" style="margin-top:1rem;">
-                    <label asp-for="Phone">Phone number</label>
+                    <label asp-for="Phone">Phone Number</label>
                     <div class="field-wrap">
-                        <input asp-for="Phone" class="form-control" placeholder="03XX-XXXXXXX" />
                         <i class="bi bi-phone field-icon"></i>
+                        <input asp-for="Phone" class="form-control"
+                               placeholder="03XX-XXXXXXX" />
                     </div>
-                    <span asp-validation-for="Phone" class="text-danger" style="font-size:.76rem;"></span>
+                    <span asp-validation-for="Phone"
+                          class="text-danger" style="font-size:.74rem;"></span>
                 </div>
 
                 <!-- Identity -->
-                <div class="form-section-label">Identity verification</div>
+                <div class="form-section-label">Identity Verification</div>
 
                 <div class="input-field">
                     <label asp-for="NationalID">CNIC / National ID</label>
                     <div class="field-wrap">
-                        <input asp-for="NationalID" class="form-control" placeholder="XXXXX-XXXXXXX-X" />
                         <i class="bi bi-card-text field-icon"></i>
+                        <input asp-for="NationalID" class="form-control"
+                               placeholder="XXXXX-XXXXXXX-X" />
                     </div>
-                    <span asp-validation-for="NationalID" class="text-danger" style="font-size:.76rem;"></span>
+                    <span asp-validation-for="NationalID"
+                          class="text-danger" style="font-size:.74rem;"></span>
                     <div class="field-hint">
-                        <i class="bi bi-shield-check"></i>
+                        <i class="bi bi-shield-check" style="color:var(--green);"></i>
                         Used for verification only — never shared publicly.
                     </div>
                 </div>
 
                 <!-- Password -->
-                <div class="form-section-label">Set a password</div>
+                <div class="form-section-label">Set a Password</div>
 
                 <div class="row g-2">
                     <div class="col-6">
                         <div class="input-field mb-0">
                             <label asp-for="Password">Password</label>
                             <div class="field-wrap">
-                                <input asp-for="Password" class="form-control" placeholder="Min. 8 characters" id="pwField" />
                                 <i class="bi bi-lock field-icon"></i>
+                                <input asp-for="Password" class="form-control"
+                                       placeholder="Min. 8 characters" />
                             </div>
-                            <span asp-validation-for="Password" class="text-danger" style="font-size:.76rem;"></span>
+                            <span asp-validation-for="Password"
+                                  class="text-danger" style="font-size:.74rem;"></span>
                         </div>
                     </div>
                     <div class="col-6">
                         <div class="input-field mb-0">
-                            <label asp-for="ConfirmPassword">Confirm password</label>
+                            <label asp-for="ConfirmPassword">Confirm Password</label>
                             <div class="field-wrap">
-                                <input asp-for="ConfirmPassword" class="form-control" placeholder="Repeat password" />
                                 <i class="bi bi-lock-fill field-icon"></i>
+                                <input asp-for="ConfirmPassword" class="form-control"
+                                       placeholder="Repeat password" />
                             </div>
-                            <span asp-validation-for="ConfirmPassword" class="text-danger" style="font-size:.76rem;"></span>
+                            <span asp-validation-for="ConfirmPassword"
+                                  class="text-danger" style="font-size:.74rem;"></span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Pending notice -->
+                <!-- Pending Notice -->
                 <div class="pending-notice">
                     <i class="bi bi-hourglass-split"></i>
                     <p>
                         <strong>Pending review.</strong>
-                        After submitting, an admin will verify your account before you can list courts — usually within 24 hours.
+                        After submitting, an admin will verify your account before
+                        you can list courts — usually within 24 hours.
                     </p>
                 </div>
 
@@ -404,7 +518,5 @@
 </div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
 }

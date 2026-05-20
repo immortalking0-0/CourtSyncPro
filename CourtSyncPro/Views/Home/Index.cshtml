@@ -2,126 +2,670 @@
     ViewData["Title"] = "Home";
 }
 
-<!-- Hero Banner -->
-<div class="rounded-4 p-5 mb-5 text-white"
-     style="background: linear-gradient(135deg, #1a3c5e 0%, #2d6a9f 100%);">
-    <div class="row align-items-center">
-        <div class="col-md-7">
-            <h1 class="display-5 fw-bold mb-3">Where Athletes Meet Their Courts</h1>
-            <p class="lead mb-4 opacity-75">
-                Book futsal, padel, cricket nets, and badminton courts online —
-                real-time availability, instant confirmation.
-            </p>
-            <a asp-controller="Courts" asp-action="Index"
-                   class="btn btn-accent btn-lg px-4 me-2">
-                <i class="bi bi-search me-1"></i> Browse Courts
+<style>
+    /* ── HERO ── */
+    .hero-wrap {
+        position: relative;
+        min-height: 480px;
+        display: flex;
+        align-items: center;
+        border-radius: 28px;
+        overflow: hidden;
+        margin-bottom: 3rem;
+        border: 1px solid var(--border);
+    }
+
+    .hero-bg {
+        position: absolute;
+        inset: 0;
+        background:
+            linear-gradient(120deg, rgba(6,8,16,0.97) 0%, rgba(6,8,16,0.7) 60%, rgba(6,8,16,0.4) 100%),
+            url('https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=1400&q=80&fit=crop');
+        background-size: cover;
+        background-position: center;
+        z-index: 0;
+    }
+
+    /* green corner glow */
+    .hero-bg::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse 60% 80% at 80% 50%, rgba(183,255,61,0.08) 0%, transparent 70%);
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 1;
+        padding: 3.5rem 3rem;
+        width: 100%;
+    }
+
+    .hero-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--green-dim);
+        border: 1px solid var(--border-hi);
+        border-radius: 50px;
+        padding: 5px 14px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--green);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 1.2rem;
+    }
+
+    .hero-title {
+        font-family: 'Orbitron', sans-serif;
+        font-size: clamp(1.8rem, 4vw, 3rem);
+        font-weight: 900;
+        line-height: 1.15;
+        color: var(--text);
+        margin-bottom: 1rem;
+        letter-spacing: -0.03em;
+    }
+
+    .hero-title .highlight {
+        color: var(--green);
+        text-shadow: 0 0 40px rgba(183,255,61,0.4);
+    }
+
+    .hero-sub {
+        color: var(--text-muted);
+        font-size: 1rem;
+        max-width: 520px;
+        line-height: 1.7;
+        margin-bottom: 2rem;
+    }
+
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+    .hero-stat-row {
+        display: flex;
+        gap: 2rem;
+        margin-top: 2.5rem;
+        padding-top: 2rem;
+        border-top: 1px solid var(--border);
+    }
+
+    .hero-stat-val {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.6rem;
+        font-weight: 900;
+        color: var(--green);
+        line-height: 1;
+    }
+
+    .hero-stat-label {
+        font-size: 0.75rem;
+        color: var(--text-faint);
+        margin-top: 3px;
+        letter-spacing: 0.04em;
+    }
+
+    /* sport tags on right */
+    .hero-sports {
+        position: absolute;
+        right: 3rem;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 1;
+    }
+
+    .sport-pill {
+        background: var(--surface-md);
+        backdrop-filter: var(--blur);
+        border: 1px solid var(--border);
+        border-radius: 50px;
+        padding: 8px 18px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all var(--transition);
+    }
+
+    .sport-pill:hover {
+        border-color: var(--border-hi);
+        color: var(--green);
+        background: var(--green-dim);
+        transform: translateX(-4px);
+    }
+
+    .sport-pill .dot {
+        width: 6px; height: 6px;
+        background: var(--green);
+        border-radius: 50%;
+        box-shadow: 0 0 6px var(--green);
+    }
+
+    /* ── SECTION HEADER ── */
+    .sec-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 1.5rem;
+    }
+
+    .sec-header-icon {
+        width: 38px; height: 38px;
+        background: var(--green-dim);
+        border: 1px solid var(--border-hi);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        color: var(--green);
+        flex-shrink: 0;
+    }
+
+    .sec-header h4 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--text);
+        margin: 0;
+    }
+
+    .sec-header span {
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin-top: 1px;
+        display: block;
+        font-family: 'Outfit', sans-serif;
+        font-weight: 400;
+    }
+
+    /* ── COURT CARDS ── */
+    .court-card {
+        background: var(--surface);
+        backdrop-filter: var(--blur);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        overflow: hidden;
+        transition: all var(--transition);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+
+    .court-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--green), #00e5a0);
+        opacity: 0;
+        transition: opacity var(--transition);
+    }
+
+    .court-card:hover {
+        border-color: var(--border-hi);
+        transform: translateY(-6px);
+        box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(183,255,61,0.1);
+        background: var(--surface-md);
+    }
+
+    .court-card:hover::before { opacity: 1; }
+
+    .court-card-body {
+        padding: 1.4rem;
+        flex: 1;
+    }
+
+    .court-sport-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: var(--green-dim);
+        border: 1px solid var(--border-hi);
+        color: var(--green);
+        font-size: 0.7rem;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 6px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+    }
+
+    .court-name {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 8px;
+        line-height: 1.3;
+    }
+
+    .court-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 12px;
+    }
+
+    .court-meta-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.78rem;
+        color: rgba(232,237,245,0.55);
+    }
+
+    .court-meta-row i { color: var(--green); opacity: 0.7; font-size: 0.75rem; }
+
+    .court-footer {
+        padding: 1rem 1.4rem;
+        border-top: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .court-price {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--green);
+    }
+
+    .court-price span {
+        font-size: 0.7rem;
+        color: var(--text-faint);
+        font-family: 'Outfit', sans-serif;
+        font-weight: 400;
+    }
+
+    .court-rating {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.8rem;
+        color: #ffc400;
+        font-weight: 600;
+    }
+
+    .btn-book-card {
+        width: 100%;
+        background: var(--green-dim);
+        border: 1px solid var(--border-hi);
+        color: var(--green);
+        font-weight: 700;
+        font-size: 0.82rem;
+        padding: 9px;
+        border-radius: var(--radius-sm);
+        text-align: center;
+        text-decoration: none;
+        display: block;
+        transition: all var(--transition);
+        margin-top: 12px;
+        letter-spacing: 0.03em;
+    }
+
+    .btn-book-card:hover {
+        background: var(--green);
+        color: var(--bg);
+        box-shadow: 0 0 20px var(--green-glow);
+    }
+
+    /* ── DISCOUNT CARDS ── */
+    .deal-card {
+        background: var(--surface);
+        backdrop-filter: var(--blur);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 1.6rem 1.2rem;
+        text-align: center;
+        height: 100%;
+        transition: all var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .deal-card::after {
+        content: '';
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        height: 3px;
+        border-radius: 0 0 20px 20px;
+    }
+
+    .deal-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--border-hi);
+        background: var(--surface-md);
+    }
+
+    .deal-icon {
+        width: 52px; height: 52px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 1.3rem;
+    }
+
+    .deal-title {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 6px;
+    }
+
+    .deal-desc {
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin-bottom: 12px;
+        line-height: 1.5;
+    }
+
+    .deal-badge {
+        display: inline-block;
+        padding: 4px 14px;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+    }
+
+    /* ── HOW IT WORKS ── */
+    .step-card {
+        background: var(--surface);
+        backdrop-filter: var(--blur);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 1.8rem 1.4rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        transition: all var(--transition);
+    }
+
+    .step-card:hover {
+        border-color: var(--border-hi);
+        transform: translateY(-4px);
+        background: var(--surface-md);
+    }
+
+    .step-num {
+        position: absolute;
+        top: 12px; right: 16px;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2.5rem;
+        font-weight: 900;
+        color: rgba(183,255,61,0.06);
+        line-height: 1;
+        pointer-events: none;
+    }
+
+    .step-icon {
+        width: 56px; height: 56px;
+        background: var(--green-dim);
+        border: 1px solid var(--border-hi);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 1.4rem;
+        color: var(--green);
+    }
+
+    .step-title {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: 6px;
+    }
+
+    .step-desc {
+        font-size: 0.8rem;
+        color: var(--text-faint);
+        line-height: 1.6;
+    }
+
+    /* Animations */
+    @@keyframes fadeSlideUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .anim-1 { animation: fadeSlideUp 0.5s ease 0.05s both; }
+    .anim-2 { animation: fadeSlideUp 0.5s ease 0.15s both; }
+    .anim-3 { animation: fadeSlideUp 0.5s ease 0.25s both; }
+    .anim-4 { animation: fadeSlideUp 0.5s ease 0.35s both; }
+
+    @@media (max-width: 768px) {
+        .hero-sports { display: none; }
+        .hero-content { padding: 2rem 1.5rem; }
+        .hero-stat-row { gap: 1.2rem; }
+    }
+</style>
+
+<!-- ═══════════════════════════════════════════════
+     HERO
+═══════════════════════════════════════════════ -->
+<div class="hero-wrap anim-1">
+    <div class="hero-bg"></div>
+
+    <div class="hero-content">
+        <div class="hero-eyebrow">
+            <span class="dot" style="width:6px;height:6px;background:var(--green);border-radius:50%;box-shadow:0 0 6px var(--green);"></span>
+            Pakistan's #1 Court Booking Platform
+        </div>
+
+        <h1 class="hero-title">
+            Where Athletes<br>
+            Meet Their <span class="highlight">Courts</span>
+        </h1>
+
+        <p class="hero-sub">
+            Book futsal, padel, cricket nets & badminton courts online —
+            real-time availability, AI-powered suggestions, instant confirmation.
+        </p>
+
+        <div class="hero-actions">
+            <a asp-controller="Courts" asp-action="Index" class="btn-glow" style="font-size:0.95rem;padding:11px 24px;">
+                <i class="bi bi-search"></i> Browse Courts
             </a>
             <a asp-controller="Bookings" asp-action="Create"
-                   class="btn btn-outline-light btn-lg px-4">
-                <i class="bi bi-plus-circle me-1"></i> Book Now
+               class="btn-glass" style="font-size:0.95rem;padding:10px 24px;color:var(--text);">
+                <i class="bi bi-plus-circle"></i> Book Now
             </a>
         </div>
-        <div class="col-md-5 text-center mt-4 mt-md-0">
-            <div class="display-1">🏟</div>
-        </div>
-    </div>
-</div>
 
-<!-- Stats Row -->
-<div class="row g-4 mb-5">
-    <div class="col-md-4">
-        <div class="card p-4 text-center">
-            <i class="bi bi-geo-alt-fill fs-1 mb-2" style="color:#1a3c5e"></i>
-            <div class="display-6 fw-bold">@ViewBag.TotalCourts</div>
-            <div class="text-muted">Active Courts</div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card p-4 text-center">
-            <i class="bi bi-calendar2-check fs-1 mb-2" style="color:#e8a020"></i>
-            <div class="display-6 fw-bold">@ViewBag.TotalBookings</div>
-            <div class="text-muted">Total Bookings</div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card p-4 text-center">
-            <i class="bi bi-people-fill fs-1 mb-2" style="color:#28a745"></i>
-            <div class="display-6 fw-bold">@ViewBag.TotalUsers</div>
-            <div class="text-muted">Registered Users</div>
-        </div>
-    </div>
-</div>
-
-<!-- Top Rated Courts -->
-<h4 class="fw-bold mb-3">
-    <i class="bi bi-star-fill text-warning me-2"></i>Top-Rated Courts
-</h4>
-<div class="row g-4 mb-5">
-    @foreach (var court in ViewBag.TopCourts)
-    {
-        <div class="col-md-6 col-lg-3">
-            <div class="card h-100">
-                <div class="card-body">
-                    <span class="badge bg-primary mb-2">@court.SportType</span>
-                    <h6 class="card-title fw-bold">@court.CourtName</h6>
-                    <p class="text-muted small mb-1">
-                        <i class="bi bi-geo-alt"></i> @court.City
-                    </p>
-                    <p class="text-muted small mb-2">
-                        <i class="bi bi-person"></i> @court.CourtOwner.BusinessName
-                    </p>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="fw-bold text-success">Rs. @court.PricePerHour/hr</span>
-                        <span class="text-warning">
-                            <i class="bi bi-star-fill"></i> @court.Rating.ToString("0.0")
-                        </span>
-                    </div>
-                </div>
-                <div class="card-footer bg-transparent border-0 pb-3">
-                    <a asp-controller="Courts" asp-action="Details"
-                       asp-route-id="@court.CourtId"
-                       class="btn btn-accent btn-sm w-100">View & Book</a>
-                </div>
+        <div class="hero-stat-row">
+            <div>
+                <div class="hero-stat-val">@ViewBag.TotalCourts</div>
+                <div class="hero-stat-label">Active Courts</div>
+            </div>
+            <div>
+                <div class="hero-stat-val">@ViewBag.TotalBookings</div>
+                <div class="hero-stat-label">Total Bookings</div>
+            </div>
+            <div>
+                <div class="hero-stat-val">@ViewBag.TotalUsers</div>
+                <div class="hero-stat-label">Registered Users</div>
             </div>
         </div>
-    }
+    </div>
+
+    <!-- Sport pills floating right -->
+    <div class="hero-sports">
+        <div class="sport-pill"><span class="dot"></span> Futsal</div>
+        <div class="sport-pill"><span class="dot"></span> Padel</div>
+        <div class="sport-pill"><span class="dot"></span> Badminton</div>
+        <div class="sport-pill"><span class="dot"></span> Cricket Net</div>
+    </div>
 </div>
 
-<!-- Discount Plans -->
-<h4 class="fw-bold mb-3">
-    <i class="bi bi-tag-fill text-danger me-2"></i>Membership & Discount Plans
-</h4>
-<div class="row g-3">
-    <div class="col-md-3">
-        <div class="card p-3 text-center h-100" style="border-top: 3px solid #17a2b8 !important;">
-            <i class="bi bi-alarm fs-2 mb-2" style="color:#17a2b8"></i>
-            <h6 class="fw-bold">Early-Bird</h6>
-            <p class="text-muted small mb-1">Book 48+ hours ahead</p>
-            <span class="badge fs-6" style="background:#17a2b8">10% OFF</span>
+<!-- ═══════════════════════════════════════════════
+     TOP RATED COURTS
+═══════════════════════════════════════════════ -->
+<div class="anim-2">
+    <div class="sec-header">
+        <div class="sec-header-icon"><i class="bi bi-star-fill"></i></div>
+        <div>
+            <h4>Top-Rated Courts</h4>
+            <span>Highest rated venues on the platform</span>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card p-3 text-center h-100" style="border-top: 3px solid #6f42c1 !important;">
-            <i class="bi bi-calendar3 fs-2 mb-2" style="color:#6f42c1"></i>
-            <h6 class="fw-bold">6-Month Plan</h6>
-            <p class="text-muted small mb-1">Pre-paid 6-month access</p>
-            <span class="badge fs-6" style="background:#6f42c1">15% OFF</span>
+
+    <div class="row g-4 mb-5">
+        @foreach (var court in ViewBag.TopCourts)
+        {
+            <div class="col-md-6 col-lg-3">
+                <div class="court-card">
+                    <div class="court-card-body">
+                        <div class="court-sport-badge">
+                            <i class="bi bi-circle-fill" style="font-size:0.4rem;"></i>
+                            @court.SportType
+                        </div>
+                        <div class="court-name">@court.CourtName</div>
+                        <div class="court-meta">
+                            <div class="court-meta-row">
+                                <i class="bi bi-geo-alt-fill"></i>
+                                <span>@court.City</span>
+                            </div>
+                            <div class="court-meta-row">
+                                <i class="bi bi-building"></i>
+                                <span>@court.CourtOwner.BusinessName</span>
+                            </div>
+                        </div>
+                        <a asp-controller="Courts" asp-action="Details"
+                           asp-route-id="@court.CourtId"
+                           class="btn-book-card">
+                            <i class="bi bi-arrow-right-circle me-1"></i>View & Book
+                        </a>
+                    </div>
+                    <div class="court-footer">
+                        <div class="court-price">
+                            Rs. @court.PricePerHour<span>/hr</span>
+                        </div>
+                        <div class="court-rating">
+                            <i class="bi bi-star-fill"></i>
+                            @court.Rating.ToString("0.0")
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     HOW IT WORKS
+═══════════════════════════════════════════════ -->
+<div class="anim-3 mb-5">
+    <div class="sec-header">
+        <div class="sec-header-icon"><i class="bi bi-lightning-fill"></i></div>
+        <div>
+            <h4>How It Works</h4>
+            <span>Book a court in under 60 seconds</span>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card p-3 text-center h-100" style="border-top: 3px solid #e8a020 !important;">
-            <i class="bi bi-trophy fs-2 mb-2" style="color:#e8a020"></i>
-            <h6 class="fw-bold">12-Month Plan</h6>
-            <p class="text-muted small mb-1">Annual court membership</p>
-            <span class="badge fs-6" style="background:#e8a020">25% OFF</span>
+
+    <div class="row g-4">
+        <div class="col-md-3">
+            <div class="step-card">
+                <div class="step-num">01</div>
+                <div class="step-icon"><i class="bi bi-search"></i></div>
+                <div class="step-title">Find a Court</div>
+                <div class="step-desc">Browse courts by city, sport type, and price range.</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="step-card">
+                <div class="step-num">02</div>
+                <div class="step-icon"><i class="bi bi-calendar-check"></i></div>
+                <div class="step-title">Pick a Slot</div>
+                <div class="step-desc">Select from real-time available time slots.</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="step-card">
+                <div class="step-num">03</div>
+                <div class="step-icon"><i class="bi bi-credit-card"></i></div>
+                <div class="step-title">Pay Online</div>
+                <div class="step-desc">Pay securely via EasyPaisa, JazzCash, or card.</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="step-card">
+                <div class="step-num">04</div>
+                <div class="step-icon"><i class="bi bi-qr-code"></i></div>
+                <div class="step-title">Show QR & Play</div>
+                <div class="step-desc">Scan your QR code at the venue and start playing.</div>
+            </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card p-3 text-center h-100" style="border-top: 3px solid #28a745 !important;">
-            <i class="bi bi-people fs-2 mb-2" style="color:#28a745"></i>
-            <h6 class="fw-bold">Referral Bonus</h6>
-            <p class="text-muted small mb-1">Refer a friend who books</p>
-            <span class="badge fs-6" style="background:#28a745">5% Credit</span>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     DISCOUNT PLANS
+═══════════════════════════════════════════════ -->
+<div class="anim-4 mb-4">
+    <div class="sec-header">
+        <div class="sec-header-icon"><i class="bi bi-tag-fill"></i></div>
+        <div>
+            <h4>Deals & Discounts</h4>
+            <span>Save more every time you play</span>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-3">
+            <div class="deal-card" style="border-top:3px solid #00e5a0 !important;">
+                <div class="deal-icon" style="background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.25);color:#00e5a0;">
+                    <i class="bi bi-alarm"></i>
+                </div>
+                <div class="deal-title">Early-Bird</div>
+                <div class="deal-desc">Book 48+ hours ahead and save instantly</div>
+                <div class="deal-badge" style="background:rgba(0,229,160,0.12);color:#00e5a0;border:1px solid rgba(0,229,160,0.3);">10% OFF</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="deal-card" style="border-top:3px solid #a78bfa !important;">
+                <div class="deal-icon" style="background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.25);color:#a78bfa;">
+                    <i class="bi bi-calendar3"></i>
+                </div>
+                <div class="deal-title">6-Month Plan</div>
+                <div class="deal-desc">Pre-paid 6-month access to all courts</div>
+                <div class="deal-badge" style="background:rgba(167,139,250,0.12);color:#a78bfa;border:1px solid rgba(167,139,250,0.3);">15% OFF</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="deal-card" style="border-top:3px solid #ffc400 !important;">
+                <div class="deal-icon" style="background:rgba(255,196,0,0.1);border:1px solid rgba(255,196,0,0.25);color:#ffc400;">
+                    <i class="bi bi-trophy"></i>
+                </div>
+                <div class="deal-title">12-Month Plan</div>
+                <div class="deal-desc">Annual court membership, best value</div>
+                <div class="deal-badge" style="background:rgba(255,196,0,0.12);color:#ffc400;border:1px solid rgba(255,196,0,0.3);">25% OFF</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="deal-card" style="border-top:3px solid var(--green) !important;">
+                <div class="deal-icon" style="background:var(--green-dim);border:1px solid var(--border-hi);color:var(--green);">
+                    <i class="bi bi-people"></i>
+                </div>
+                <div class="deal-title">Referral Bonus</div>
+                <div class="deal-desc">Refer a friend who books a court</div>
+                <div class="deal-badge" style="background:var(--green-dim);color:var(--green);border:1px solid var(--border-hi);">5% Credit</div>
+            </div>
         </div>
     </div>
 </div>
