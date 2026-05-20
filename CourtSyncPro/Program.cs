@@ -1,7 +1,7 @@
 using CourtSyncPro.Data;
 using CourtSyncPro.Hubs;
 using CourtSyncPro.Models.AI.Services;
-
+using CourtSyncPro.Services;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 
@@ -45,7 +45,7 @@ namespace CourtSyncPro
             // AI Services
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddHttpClient<GeminiService>();
-
+            builder.Services.AddSingleton<DynamicPricingService>();
             builder.Services.AddScoped<BookingAiService>();
 
             var app = builder.Build();

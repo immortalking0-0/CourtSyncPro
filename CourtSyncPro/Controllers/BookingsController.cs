@@ -1,6 +1,7 @@
 ﻿using CourtSyncPro.Data;
 using CourtSyncPro.Hubs;                              // ← ADD
 using CourtSyncPro.Models.Entities;
+using CourtSyncPro.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;                   // ← ADD
 using Microsoft.EntityFrameworkCore;
@@ -11,13 +12,15 @@ namespace CourtSyncPro.Controllers
     public class BookingsController : Controller
     {
         private readonly ApplicationDbContext _db;
+        private readonly DynamicPricingService _pricing;
         private readonly IHubContext<BookingHub> _hub; // ← ADD
 
         public BookingsController(
-            ApplicationDbContext db,
+            ApplicationDbContext db, DynamicPricingService pricing,
             IHubContext<BookingHub> hub)               // ← ADD
         {
             _db = db;
+            _pricing = pricing;
             _hub = hub;                               // ← ADD
         }
 
@@ -27,6 +30,7 @@ namespace CourtSyncPro.Controllers
         [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Booking booking)
         {
+            // ── Step 1: Session check — must be logged in as Player ──
             var userId = HttpContext.Session.GetInt32("UserId");
             var role = HttpContext.Session.GetString("UserRole");
 
@@ -35,6 +39,9 @@ namespace CourtSyncPro.Controllers
 
             booking.UserId = userId.Value;
 
+            // ── Step 2: Remove navigation property errors ────────────
+            // EF Core navigation properties are not submitted in forms
+            // so we must remove them from ModelState validation
             ModelState.Remove("UserId");
             ModelState.Remove("User");
             ModelState.Remove("Court");
@@ -45,9 +52,8 @@ namespace CourtSyncPro.Controllers
             ModelState.Remove("Status");
             ModelState.Remove("TotalAmount");
             ModelState.Remove("PromoCode");
-            ModelState.Remove("SlotId");
-            ModelState.Remove("CourtId");
 
+            // ── Step 3: Manual validation for required dropdowns ─────
             if (booking.SlotId == 0)
                 ModelState.AddModelError("SlotId", "Please select a time slot.");
             if (booking.CourtId == 0)
@@ -55,18 +61,21 @@ namespace CourtSyncPro.Controllers
 
             if (ModelState.IsValid)
             {
+                // ── Step 4: Load court and slot from database ─────────
                 var court = await _db.Courts.FindAsync(booking.CourtId);
                 var slot = await _db.TimeSlots.FindAsync(booking.SlotId);
 
                 if (court == null || slot == null)
                 {
-                    ModelState.AddModelError("", "Invalid court or time slot selected.");
+                    ModelState.AddModelError("",
+                        "Invalid court or time slot selected.");
                     await PopulateCreateViewBag();
                     return View(booking);
                 }
 
-                // ── Race condition guard ──────────────────────────
-                // Re-check availability right before saving
+                // ── Step 5: Race condition guard ──────────────────────
+                // Check AGAIN right before saving — another user may have
+                // booked this slot between loading the form and submitting
                 bool alreadyBooked = await _db.Bookings.AnyAsync(b =>
                     b.SlotId == slot.SlotId &&
                     b.Status != BookingStatus.Cancelled);
@@ -74,57 +83,101 @@ namespace CourtSyncPro.Controllers
                 if (alreadyBooked)
                 {
                     ModelState.AddModelError("",
-                        "⚡ Sorry! This slot was just booked by someone else. Please choose another.");
+                        "⚡ Sorry! This slot was just booked by someone else." +
+                        " Please choose another slot.");
                     await PopulateCreateViewBag();
                     return View(booking);
                 }
 
-                // ── Price calculation (your existing logic) ───────
-                var hours = (decimal)(slot.EndTime.TimeOfDay - slot.StartTime.TimeOfDay).TotalHours;
+                // ── Step 6: Validate slot duration ───────────────────
+                var hours = (slot.EndTime - slot.StartTime).TotalHours;
 
                 if (hours <= 0 || hours > 5)
                 {
-                    ModelState.AddModelError("", "Invalid time slot duration.");
+                    ModelState.AddModelError("",
+                        "Invalid time slot duration. Must be between 1–5 hours.");
+                    await PopulateCreateViewBag();
                     return View(booking);
                 }
 
-                booking.TotalAmount = Math.Round(court.PricePerHour * hours, 2);
+                // ── Step 7: Count today's bookings for demand factor ──
+                int bookingsToday = await _db.Bookings
+                    .CountAsync(b =>
+                        b.CourtId == booking.CourtId &&
+                        b.BookingDate.Date == DateTime.Today &&
+                        b.Status != BookingStatus.Cancelled);
 
-                var daysAhead = (slot.StartTime.Date - DateTime.Now.Date).TotalDays;
-                if (daysAhead >= 2)
-                    booking.TotalAmount = Math.Round(booking.TotalAmount * 0.90m, 2);
+                // ── Step 8: Dynamic pricing calculation ───────────────
+                // Factors: Season + Time of day + Day of week +
+                //          Court rating + Live demand
+                var breakdown = _pricing.Calculate(
+                    court.PricePerHour,
+                    slot.StartTime,
+                    court.Rating,
+                    bookingsToday
+                );
 
+                // Total = dynamic price per hour × hours booked
+                booking.TotalAmount = Math.Round(
+                    breakdown.FinalPrice * (decimal)hours, 2);
+
+                // ── Step 9: Early-bird 10% discount ───────────────────
+                // Applied on top of dynamic price if 48+ hours in advance
+                var hoursUntilSlot = (slot.StartTime - DateTime.UtcNow).TotalHours;
+                if (hoursUntilSlot >= 48)
+                    booking.TotalAmount = Math.Round(
+                        booking.TotalAmount * 0.90m, 2);
+
+                // ── Step 10: Set booking metadata ────────────────────
+                booking.BookingDate = DateTime.UtcNow;
+                booking.Status = BookingStatus.Pending;
+
+                // Generate unique 12-character QR code
+                booking.QRCode = Guid.NewGuid().ToString("N")[..12].ToUpper();
+
+                // ── Step 11: Lock the slot ────────────────────────────
+                // Set IsAvailable = false so no one else can book it
                 slot.IsAvailable = false;
 
+                // ── Step 12: Save everything to database ──────────────
                 _db.Bookings.Add(booking);
                 await _db.SaveChangesAsync();
 
-                // generate real QR code image
+                // ── Step 13: Generate QR code image (Base64) ─────────
                 var qrBase64 = GenerateQRCodeBase64(booking.QRCode);
-                TempData["QRCode"] = qrBase64;
-                TempData["Success"] = $"Booking confirmed! Your QR Code: {booking.QRCode}";
-                return RedirectToAction(nameof(Details), new { id = booking.BookingId });
+                TempData["QRCodeImage"] = qrBase64;
 
-                // ── Broadcast to ALL connected browsers ───────────
-                string slotLabel = $"{slot.StartTime:dd MMM HH:mm} → {slot.EndTime:HH:mm}";
+                // ── Step 14: Broadcast slot taken via SignalR ─────────
+                // Tells ALL connected browsers this slot is now gone
+                // (Must be BEFORE the redirect — not after)
+                string slotLabel =
+                    $"{slot.StartTime:dd MMM HH:mm} → {slot.EndTime:HH:mm}";
 
                 await _hub.Clients.All.SendAsync(
                     "SlotTaken",
                     slot.SlotId,
                     booking.CourtId,
                     court.CourtName,
-                    slotLabel);
+                    slotLabel
+                );
 
-                TempData["Success"] = $"Booking confirmed! Your QR Code: {booking.QRCode}";
-                return RedirectToAction(nameof(Details), new { id = booking.BookingId });
+                // ── Step 15: Success and redirect ────────────────────
+                TempData["Success"] =
+                    $"🎉 Booking #{booking.BookingId} confirmed! " +
+                    $"Total: Rs. {booking.TotalAmount} | QR: {booking.QRCode}";
+
+                return RedirectToAction(nameof(Details),
+                    new { id = booking.BookingId });
             }
 
+            // ── Validation failed — collect all errors and show form ──
             var errors = ModelState.Values
                 .SelectMany(v => v.Errors)
                 .Select(e => e.ErrorMessage)
                 .ToList();
 
-            TempData["Error"] = "Failed: " + string.Join(" | ", errors);
+            TempData["Error"] = "Booking failed: " + string.Join(" | ", errors);
+
             await PopulateCreateViewBag();
             return View(booking);
         }

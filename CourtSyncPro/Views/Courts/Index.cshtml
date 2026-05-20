@@ -1,5 +1,7 @@
 ﻿@model IEnumerable<CourtSyncPro.Models.Entities.Court>
 @using CourtSyncPro.Models.Entities
+@using CourtSyncPro.Services
+@inject DynamicPricingService PricingService
 @{
     ViewData["Title"] = "Browse Courts";
 }
@@ -63,41 +65,157 @@ else
     <div class="row g-4">
         @foreach (var court in Model)
         {
+            @* ── Calculate dynamic price for this court right now ── *@
+            var bd = PricingService.Calculate(
+                court.PricePerHour,
+                DateTime.Now,
+                court.Rating
+            );
+            bool priceChanged = bd.FinalPrice != court.PricePerHour;
+
             <div class="col-md-6 col-lg-4">
                 <div class="card h-100">
-                    <div class="p-3 rounded-top text-white d-flex justify-content-between"
-                         style="background: linear-gradient(135deg,#1a3c5e,#2d6a9f)">
+
+                    @* ── Card Header ── *@
+                    <div class="p-3 rounded-top text-white d-flex
+                        justify-content-between align-items-start"
+                         style="background:linear-gradient(135deg,#1a3c5e,#2d6a9f)">
                         <span class="fw-bold">@court.CourtName</span>
                         <span class="badge bg-warning text-dark">@court.SportType</span>
                     </div>
+
                     <div class="card-body">
+
+                        @* ── Location & Owner ── *@
                         <p class="text-muted small mb-1">
-                            <i class="bi bi-geo-alt"></i> @court.Address, @court.City
+                            <i class="bi bi-geo-alt"></i>
+                            @court.Address, @court.City
                         </p>
                         <p class="text-muted small mb-2">
-                            <i class="bi bi-person"></i> @court.CourtOwner?.BusinessName
+                            <i class="bi bi-person"></i>
+                            @court.CourtOwner?.BusinessName
                         </p>
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span class="fs-5 fw-bold text-success">
-                                Rs. @court.PricePerHour
-                                <small class="fs-6 text-muted">/hr</small>
-                            </span>
+
+                        @* ══════════════════════════════════════════════
+                           PASTE STARTS HERE — Dynamic Pricing Section
+                        ══════════════════════════════════════════════ *@
+
+                        @* ── Price Row ── *@
+                        <div class="d-flex justify-content-between
+                            align-items-center mb-1">
+
+                            @* Left side: price *@
+                            <div>
+                                @if (priceChanged)
+                                {
+                                    @* Show strikethrough original price *@
+                                    <span class="text-decoration-line-through
+                                        text-muted small me-1">
+                                        Rs. @court.PricePerHour
+                                    </span>
+                                    @* Show new dynamic price *@
+                                    <span class="fs-5 fw-bold
+                                        text-@bd.TagColor">
+                                        Rs. @bd.FinalPrice
+                                        <small class="fs-6 fw-normal
+                                        text-muted">/hr</small>
+                                    </span>
+                                }
+                                else
+                                {
+                                    @* No change — show standard price *@
+                                    <span class="fs-5 fw-bold text-success">
+                                        Rs. @court.PricePerHour
+                                        <small class="fs-6 text-muted">/hr</small>
+                                    </span>
+                                }
+                            </div>
+
+                            @* Right side: star rating *@
                             <span class="text-warning fw-semibold">
-                                <i class="bi bi-star-fill"></i> @court.Rating.ToString("0.0")
+                                <i class="bi bi-star-fill"></i>
+                                @court.Rating.ToString("0.0")
                             </span>
                         </div>
+
+                        @* ── Price Tag Badge ── *@
+                        @if (priceChanged)
+                        {
+                            <div class="mb-2">
+                                <span class="badge bg-@bd.TagColor me-1">
+                                    @bd.PriceTag
+                                </span>
+                                @if (bd.TotalChange > 0)
+                                {
+                                    <small class="text-danger fw-semibold">
+                                        +Rs. @bd.TotalChange extra
+                                    </small>
+                                }
+                                else
+                                {
+                                    <small class="text-success fw-semibold">
+                                        Rs. @Math.Abs(bd.TotalChange) saved!
+                                    </small>
+                                }
+                            </div>
+                        }
+
+                        @* ── Pricing Reason Pills (Season + Time + Day) ── *@
+                        <div class="d-flex flex-wrap gap-1 mb-3">
+                            @* Season pill *@
+                            <span class="badge rounded-pill bg-info
+                                text-dark small"
+                                  title="@bd.SeasonLabel"
+                                  style="font-size:.68rem">
+                                @bd.SeasonLabel.Split('—')[0].Trim()
+                            </span>
+                            @* Time of day pill *@
+                            <span class="badge rounded-pill bg-secondary small"
+                                  title="@bd.TimeLabel"
+                                  style="font-size:.68rem">
+                                @bd.TimeLabel.Split('—')[0].Trim()
+                            </span>
+                            @* Day pill *@
+                            <span class="badge rounded-pill bg-primary small"
+                                  title="@bd.DayLabel"
+                                  style="font-size:.68rem">
+                                @bd.DayLabel.Split('—')[0].Trim()
+                            </span>
+                            @* Rating pill *@
+                            @if (court.Rating >= 4.1f)
+                            {
+                                <span class="badge rounded-pill bg-warning
+                                    text-dark small"
+                                      title="@bd.RatingLabel"
+                                      style="font-size:.68rem">
+                                    Premium Court
+                                </span>
+                            }
+                        </div>
+
+                        @* ══════════════════════════════════════════════
+                           PASTE ENDS HERE
+                        ══════════════════════════════════════════════ *@
+
+                        @* ── Action Buttons ── *@
                         <div class="d-flex gap-2">
-                            <a asp-action="Details" asp-route-id="@court.CourtId"
-                               class="btn btn-accent btn-sm flex-fill">Book</a>
-                            <a asp-action="Edit" asp-route-id="@court.CourtId"
-                                   class="btn btn-outline-secondary btn-sm">
+                            <a asp-action="Details"
+                               asp-route-id="@court.CourtId"
+                               class="btn btn-accent btn-sm flex-fill">
+                                Book — Rs. @bd.FinalPrice/hr
+                            </a>
+                            <a asp-action="Edit"
+                               asp-route-id="@court.CourtId"
+                               class="btn btn-outline-secondary btn-sm">
                                 <i class="bi bi-pencil"></i>
                             </a>
-                            <a asp-action="Delete" asp-route-id="@court.CourtId"
-                                   class="btn btn-outline-danger btn-sm">
+                            <a asp-action="Delete"
+                               asp-route-id="@court.CourtId"
+                               class="btn btn-outline-danger btn-sm">
                                 <i class="bi bi-trash"></i>
                             </a>
                         </div>
+
                     </div>
                 </div>
             </div>

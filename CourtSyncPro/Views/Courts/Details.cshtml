@@ -34,6 +34,115 @@
             </div>
         </div>
 
+
+        @using CourtSyncPro.Services
+    @{
+            var slotPrices = ViewBag.SlotPrices as Dictionary<int, PriceBreakdown>;
+        }
+
+        <!-- Time Slots with Dynamic Pricing -->
+        <h5 class="fw-bold mb-3">
+            <i class="bi bi-clock me-2 text-primary"></i>Available Slots
+        </h5>
+
+        @foreach (var slot in Model.TimeSlots)
+        {
+            var bp = slotPrices != null && slotPrices.ContainsKey(slot.SlotId)
+                     ? slotPrices[slot.SlotId]
+                     : null;
+
+            <div class="card mb-3 border-0 shadow-sm">
+                <div class="card-body p-3">
+
+                    <!-- Slot time + price tag -->
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <i class="bi bi-calendar-event me-1 text-primary"></i>
+                            <strong>
+                                @slot.StartTime.ToString("dd MMM yyyy")
+                                @slot.StartTime.ToString("hh:mm tt") —
+                                @slot.EndTime.ToString("hh:mm tt")
+                            </strong>
+                        </div>
+                        @if (bp != null)
+                        {
+                            <span class="badge bg-@bp.TagColor fs-6">
+                                @bp.PriceTag
+                            </span>
+                        }
+                    </div>
+
+                    @if (bp != null)
+                    {
+                        <!-- Price display -->
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div>
+                                <div class="text-muted small">Base Price</div>
+                                <div class="text-decoration-line-through text-muted">
+                                    Rs. @bp.BasePrice/hr
+                                </div>
+                            </div>
+                            <i class="bi bi-arrow-right text-muted"></i>
+                            <div>
+                                <div class="text-muted small">Dynamic Price</div>
+                                <div class="fw-bold fs-5 text-@bp.TagColor">
+                                    Rs. @bp.FinalPrice/hr
+                                    @if (bp.TotalChange > 0)
+                                    {
+                                        <small class="text-danger">
+                                            (+Rs. @bp.TotalChange)
+                                        </small>
+                                    }
+                                    else if (bp.TotalChange < 0)
+                                    {
+                                        <small class="text-success">
+                                            (Rs. @bp.TotalChange saved!)
+                                        </small>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Price factors breakdown -->
+                        <div class="bg-light rounded p-2 mb-3">
+                            <div class="small fw-bold mb-1 text-dark">
+                                Price Factors:
+                            </div>
+                            <div class="row g-1">
+                                <div class="col-12">
+                                    <span class="badge bg-info me-1">Season</span>
+                                    <span class="small text-muted">@bp.SeasonLabel</span>
+                                </div>
+                                <div class="col-12">
+                                    <span class="badge bg-warning text-dark me-1">Time</span>
+                                    <span class="small text-muted">@bp.TimeLabel</span>
+                                </div>
+                                <div class="col-12">
+                                    <span class="badge bg-primary me-1">Day</span>
+                                    <span class="small text-muted">@bp.DayLabel</span>
+                                </div>
+                                <div class="col-12">
+                                    <span class="badge bg-success me-1">Rating</span>
+                                    <span class="small text-muted">@bp.RatingLabel</span>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Book button -->
+                    <a asp-controller="Bookings" asp-action="Create"
+                       asp-route-courtId="@Model.CourtId"
+                       asp-route-slotId="@slot.SlotId"
+                       class="btn btn-accent w-100">
+                        <i class="bi bi-calendar-check me-1"></i>
+                        Book This Slot —
+                        Rs. @(bp?.FinalPrice ?? Model.PricePerHour)/hr
+                    </a>
+
+                </div>
+            </div>
+        }
+
         <!-- Reviews -->
         <div class="card p-4">
             <h5 class="fw-bold mb-3">

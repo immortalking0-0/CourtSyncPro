@@ -1,5 +1,6 @@
 ﻿using CourtSyncPro.Data;
 using CourtSyncPro.Models.Entities;
+using CourtSyncPro.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,9 +9,15 @@ namespace CourtSyncPro.Controllers
     public class CourtsController : Controller
     {
         private readonly ApplicationDbContext _db;
+        private readonly DynamicPricingService _pricing;
 
-        public CourtsController(ApplicationDbContext db) => _db = db;
-
+        public CourtsController(ApplicationDbContext db,
+                                DynamicPricingService pricing)
+        {
+            _db = db;
+            _pricing = pricing;
+        }   
+        
         // GET: /Courts  ← NO [HttpPost] here!
         public async Task<IActionResult> Index(string? city, SportType? sport, decimal? maxPrice)
         {
@@ -40,11 +47,40 @@ namespace CourtSyncPro.Controllers
         public async Task<IActionResult> Details(int id)
         {
             var court = await _db.Courts
-                .Include(c => c.CourtOwner)
-                .Include(c => c.Reviews).ThenInclude(r => r.User)
-                .FirstOrDefaultAsync(c => c.CourtId == id);
+            .Include(c => c.CourtOwner)
+            .Include(c => c.TimeSlots
+                .Where(ts => ts.IsAvailable
+                          && !ts.IsBlocked
+                          && ts.StartTime > DateTime.UtcNow))
+            .Include(c => c.Reviews)
+            .FirstOrDefaultAsync(c => c.CourtId == id);
 
             if (court == null) return NotFound();
+
+            // Count today's bookings for demand pricing
+            int bookingsToday = await _db.Bookings
+                .CountAsync(b => b.CourtId == id
+                              && b.BookingDate.Date == DateTime.Today
+                              && b.Status != BookingStatus.Cancelled);
+
+            // Calculate dynamic price for each slot
+            var slotPrices = new Dictionary<int, PriceBreakdown>();
+
+            foreach (var slot in court.TimeSlots)
+            {
+                var breakdown = _pricing.Calculate(
+                    court.PricePerHour,
+                    slot.StartTime,
+                    court.Rating,
+                    bookingsToday
+                );
+                slotPrices[slot.SlotId] = breakdown;
+            }
+
+            ViewBag.SlotPrices = slotPrices;
+            ViewBag.BasePrice = court.PricePerHour;
+            ViewBag.BookingsToday = bookingsToday;
+
             return View(court);
         }
 
