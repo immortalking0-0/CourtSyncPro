@@ -114,51 +114,6 @@ Prices adjust automatically based on multiple real-world factors:
 | Safety cap | Never below 60% or above 250% of base price |
 
 ---
-
-## 🛠️ How to Run Locally
-
-```bash
-# 1. Clone the repository
-git clone https://github.com/yourusername/CourtSyncPro.git
-
-# 2. Open in Visual Studio 2022 or 2026
-
-# 3. Install NuGet packages (Package Manager Console)
-Install-Package Microsoft.EntityFrameworkCore.SqlServer
-Install-Package Microsoft.EntityFrameworkCore.Tools
-Install-Package Microsoft.AspNetCore.SignalR
-Install-Package BCrypt.Net-Next
-Install-Package Newtonsoft.Json
-
-# 4. Update appsettings.json with your connection string and Gemini API key
-
-# 5. Run migrations to create the database
-Add-Migration "InitialCreate"
-Update-Database
-
-# 6. Press F5 to run
-```
-
----
-
-## 🔑 Environment Variables (appsettings.json)
-
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=CourtSyncProDb;Trusted_Connection=True;"
-  },
-  "Gemini": {
-    "ApiKey": "your_gemini_api_key_here",
-    "Model": "gemini-2.0-flash-lite"
-  }
-}
-```
-
-Get a free Gemini API key at: **aistudio.google.com**
-
----
-
 ## 👥 Team
 
 | Name | Role |
